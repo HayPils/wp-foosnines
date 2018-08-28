@@ -78,6 +78,8 @@ class Wp_Foosnines {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+                if (!is_admin())
+                    $this->define_shortcode_callbacks();
 
 	}
 
@@ -110,6 +112,11 @@ class Wp_Foosnines {
 		 * of the plugin.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wp-foosnines-i18n.php';
+                
+                /**
+		 * The class is responsible for defining the shortcode functionality of the plugin.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wp-foosnines-shortcodes.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
@@ -187,14 +194,18 @@ class Wp_Foosnines {
 
                 $this->loader->add_action( 'user_register', $plugin_public, 'tml_user_register_names' );
 
-                /* SHORTCODE HOOK REGISTRATION */
-                // foosleaderboard shortcode hook registration
-                $this->loader->add_shortcode( 'foos_leaderboard', $plugin_public, 'foos_gen_leader_board' );
-                $this->loader->add_shortcode( 'foos-searchforplayer', $plugin_public, 'foos_search_for_player' );
-                $this->loader->add_shortcode( 'foos-playerinfo', $plugin_public, 'foos_player_info' );
-                $this->loader->add_shortcode( 'foos-startmatchmodal', $plugin_public, 'foos_start_match_modal' );
-
 	}
+        
+        private function define_shortcode_callbacks() {
+            
+                $plugin_shortcodes = new Wp_Foosnines_Shortcodes( $this->get_plugin_name(), $this->get_version() );
+                        
+                $this->loader->add_shortcode( 'foos_leaderboard', $plugin_shortcodes, 'foos_gen_leader_board' );
+                $this->loader->add_shortcode( 'foos-searchforplayer', $plugin_shortcodes, 'foos_search_for_player' );
+                $this->loader->add_shortcode( 'foos-playerinfo', $plugin_shortcodes, 'foos_player_info' );
+                $this->loader->add_shortcode( 'foos-startmatchmodal', $plugin_shortcodes, 'foos_start_match_modal' );
+                
+        }
 
 	/**
 	 * Run the loader to execute all of the hooks with WordPress.
