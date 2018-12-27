@@ -299,7 +299,7 @@ class Wp_Foosnines_Shortcodes {
                         </div>
                       </div>
                       <div class="modal-footer">
-                        <form action="http://foos.5nines.com/matches/" method="post">
+                        <form action="http://foos.5nines.com/my-matches/" method="post">
                             <input type="hidden" id="p1ID" name="p1id" value="' . get_current_user_id() . '">
                             <input type="hidden" id="p2ID" name="p2id" value="">
                             <button type="submit" id="startBtn" class="btn btn-primary">Start Match</button>
@@ -336,6 +336,217 @@ class Wp_Foosnines_Shortcodes {
         return $toRet;
     }
     
+    public function matches_archive() {
+        // get all singles matches
+        $singles_ids = new WP_Query([
+            'post_type' => 'singles_match',
+            'meta_query'    => [
+                [
+                    'key'   => 'is_final',
+                    'value' => '0',
+                    'compare' => '='
+                ]
+            ],
+            'fields'    => 'ids'
+        ]);
+        $singles_ids = $singles_ids->posts;
+        
+        ob_start(); ?>
+<div class="container-flex" style="margin-bottom:50px;">
+    <div class="row">
+        <div class="col" style="text-align:center;"><h1>Singles</h1></div>
+        <div class="col" style="text-align:center;"><h1>Doubles</h1></div>
+    </div>
+</div>
+
+<!-- singles matches -->
+<div class="container-flex">
+        <?php
+        foreach ($singles_ids as $match_id) :
+            $p1_id = get_post_meta($match_id, 'p1_id', true);
+            $p2_id = get_post_meta($match_id, 'p2_id', true);
+            $p1_user = get_userdata($p1_id);
+            $p2_user = get_userdata($p2_id);
+            $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
+            $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
+            ?>
+    <div class="row justify-content-md-center">
+        <div class="col-sm-3">
+            <div class="row">
+                <div class="col-"><img src="<?php echo get_avatar_url($p1_id, ['size' => 40]) ?>"></div>
+                <div class="col"><h3><?php echo $p1_name ?></h3></div>
+            </div>
+        </div>
+        <div class="col-sm-3" style="text-align:center;">
+            <h3><?php echo get_post_meta($match_id, 'p1_score', true) ?> - <?php echo get_post_meta($match_id, 'p2_score', true) ?></h3>
+        </div>
+        <div class="col-sm-3" style="text-align:right;">
+            <div class="row">
+                <div class="col"><h3><?php echo $p2_name ?></h3></div>
+                <div class="col-"><img src="<?php echo get_avatar_url($p2_id, ['size' => 40]) ?>"></div>
+            </div>
+        </div>
+    </div>
+            <?php
+        endforeach; ?>
+</div>
+        <?php
+        return ob_get_clean();
+    }
+    
+    public function my_matches() {
+        // attempt to create new match if player ids in request vars
+        if (isset($_POST['p1id']) && isset($_POST['p2id'])) {
+            $p1_id = intval($_POST['p1id']);
+            $p2_id = intval($_POST['p2id']);
+            $this->create_singles_match($p1_id, $p2_id);
+        }
+        
+        $curr_user_id = get_current_user_id();
+        $inp_singles = $this->get_user_inp_singles($curr_user_id);
+        ob_start(); ?>
+<div class="container-flex" style="margin-bottom:50px;">
+    <div class="row justify-content-md-center">
+        <div class="col" style="text-align:center;"><h1>In Progress</h1></div>
+        <div class="col" style="text-align:center;"><h1>Final</h1></div>
+    </div>
+</div>
+<!-- inp singles matches -->
+<div class="container-flex">
+        <?php
+        foreach ($inp_singles as $match_id) :
+            $p1_id = get_post_meta($match_id, 'p1_id', true);
+            $p2_id = get_post_meta($match_id, 'p2_id', true);
+            $p1_score = get_post_meta($match_id, 'p1_score', true);
+            $p2_score = get_post_meta($match_id, 'p2_score', true);
+            $p1_user = get_userdata($p1_id);
+            $p2_user = get_userdata($p2_id);
+            $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
+            $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
+            ?>
+    <div class="row justify-content-md-center">
+        <div class="col-sm-3">
+            <div class="row">
+                <div class="col-"><img src="<?php echo get_avatar_url($p1_id, ['size' => 40]) ?>"></div>
+                <div class="col"><h3><?php echo $p1_name ?></h3></div>
+            </div>
+        </div>
+        <div class="col-xs-3 foos-score-box-form" style="text-align:center;">
+            <form method="post">
+                <h3><input type="text" name="p1_score" value="<?php echo $p1_score ?>">-<input type="text" name="p2_score" value="<?php echo $p2_score ?>"></h3>
+                <?php if ($p1_score == 0 xor $p2_score == 5) : ?>
+                    <button type="submit" class="btn btn-success">Accept</button>
+                <?php else: ?>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                <?php endif; ?>
+            </form>
+        </div>
+        <div class="col-sm-3" style="text-align:right;">
+            <div class="row">
+                <div class="col"><h3><?php echo $p2_name ?></h3></div>
+                <div class="col-"><img src="<?php echo get_avatar_url($p2_id, ['size' => 40]) ?>"></div>
+            </div>
+        </div>
+    </div>
+            <?php
+        endforeach; ?>
+</div>
+<script>
+    jQuery('.foos-score-box-form input').change(function() {
+        var submit_btn = jQuery('.foos-score-box-form button');
+        submit_btn.removeClass('btn-success');
+        submit_btn.addClass('btn-primary');
+        submit_btn.text('Submit');
+    });
+</script>
+        <?php
+        return ob_get_clean();
+    }
+    
+    
+    /**
+     * Redirection function hooked into template_redirect. Checks for matchid parameter and finds existing match of
+     * the player id parameters or creates new match with given player id parameters
+     */
+    public function create_singles_match($p1_id, $p2_id) {      
+        $curr_user_id = get_current_user_id();
+        // check if player ids exist
+        // prevent other users from creating matches for other players
+        // and from creating matches with themselves
+        if (!$this->user_id_exists($p1_id) || !$this->user_id_exists($p2_id)
+            || ($curr_user_id != $p1_id && $curr_user_id != $p2_id)
+            || ($curr_user_id == $p1_id && $curr_user_id == $p2_id)) {
+            return;
+        }
+        // check if match already exists
+        $args = array(
+            'post_type' => 'singles_match',
+            'meta_query' => array(
+                'relation' => 'OR',
+                array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => 'p1_id',
+                        'value' => $p1_id,
+                        'compare' => '=',
+                    ),
+                    array(
+                        'key' => 'p2_id',
+                        'value' => $p2_id,
+                        'compare' => '='
+                    ),
+                    array(
+                        'key' => 'is_final',
+                        'value' => 0,
+                        'compare' => '='
+                    )
+                ),
+                array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => 'p1_id',
+                        'value' => $p2_id,
+                        'compare' => '=',
+                    ),
+                    array(
+                        'key' => 'p2_id',
+                        'value' => $p1_id,
+                        'compare' => '='
+                    ),
+                    array(
+                        'key' => 'is_final',
+                        'value' => 0,
+                        'compare' => '='
+                    )
+                )
+            )
+        );
+        $wp_query = new WP_Query($args);
+        $existing_match_ids = $wp_query->get_posts();
+
+        if (count($existing_match_ids) > 0) return;  // do not create new match if one already exists
+
+        $p1_user = get_userdata($p1_id);
+        $p2_user = get_userdata($p2_id);
+        $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
+        $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
+        
+        // create match post
+        wp_insert_post(array(
+            'post_type' => 'singles_match',
+            'post_title' => $p1_name . ' vs. ' . $p2_name,
+            'post_status' => 'publish',
+            'meta_input' => array(
+                'p1_id' => $p1_id,
+                'p2_id' => $p2_id,
+                'p1_score'  => 0,
+                'p2_score'  => 0,
+                'is_final' => 0,
+            )
+        ));
+    }
+    
+    
     /**
      * Returns rank of a player based on W/L ratio multiplied by
      * number of played games
@@ -361,6 +572,88 @@ class Wp_Foosnines_Shortcodes {
             return (float)($wins + 1) * $wins;
         }
         return ((float)$wins / (float)$losses) * ($wins + $losses);
+    }
+    
+    private function get_user_inp_singles($user_id) {
+        $singles_ids = new WP_Query([
+            'post_type' => 'singles_match',
+            'fields'    => 'ids',
+            'meta_query' => array(
+                'relation' => 'OR',
+                array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => 'p1_id',
+                        'value' => $user_id,
+                        'compare' => '=',
+                    ),
+                    array(
+                        'key' => 'is_final',
+                        'value' => 0,
+                        'compare' => '='
+                    )
+                ),
+                array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => 'p2_id',
+                        'value' => $user_id,
+                        'compare' => '='
+                    ),
+                    array(
+                        'key' => 'is_final',
+                        'value' => 0,
+                        'compare' => '='
+                    )
+                )
+            )
+        ]);
+        return $singles_ids->posts;
+    }
+    
+    private function get_user_final_singles($user_id) {
+        $singles_ids = new WP_Query([
+            'post_type' => 'singles_match',
+            'fields'    => 'ids',
+            'meta_query' => array(
+                'relation' => 'OR',
+                array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => 'p1_id',
+                        'value' => $user_id,
+                        'compare' => '=',
+                    ),
+                    array(
+                        'key' => 'is_final',
+                        'value' => 1,
+                        'compare' => '='
+                    )
+                ),
+                array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => 'p2_id',
+                        'value' => $user_id,
+                        'compare' => '='
+                    ),
+                    array(
+                        'key' => 'is_final',
+                        'value' => 1,
+                        'compare' => '='
+                    )
+                )
+            )
+        ]);
+        return $singles_ids->posts;
+    }
+    
+    private function user_id_exists($user_id){
+        global $wpdb;
+
+        $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->users WHERE ID = %d", $user_id));
+
+        if($count == 1){ return TRUE; }else{ return FALSE; }
     }
 }
 

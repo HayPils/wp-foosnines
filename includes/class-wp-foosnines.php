@@ -189,9 +189,6 @@ class Wp_Foosnines {
                 $this->loader->add_action( 'init', $plugin_public, 'create_match_post_type' );
                 $this->loader->add_action(  'shutdown', $plugin_public, 'deactivate_foos');
 
-                // Register redirection logic for match page
-                $this->loader->add_action( 'template_redirect', $plugin_public, 'foos_matches_redirect' );
-
                 $this->loader->add_action( 'user_register', $plugin_public, 'tml_user_register_names' );
 
 	}
@@ -204,6 +201,8 @@ class Wp_Foosnines {
                 $this->loader->add_shortcode( 'foos-searchforplayer', $plugin_shortcodes, 'foos_search_for_player' );
                 $this->loader->add_shortcode( 'foos-playerinfo', $plugin_shortcodes, 'foos_player_info' );
                 $this->loader->add_shortcode( 'foos-startmatchmodal', $plugin_shortcodes, 'foos_start_match_modal' );
+                $this->loader->add_shortcode( 'foos-match-archive', $plugin_shortcodes, 'matches_archive' );
+                $this->loader->add_shortcode( 'foos-my-matches', $plugin_shortcodes, 'my_matches' );
                 
         }
 

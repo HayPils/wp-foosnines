@@ -109,168 +109,40 @@ class Wp_Foosnines_Public {
     }
 
     public function create_match_post_type() {
-	    $labels = array(
-            'name'               => __( 'Matches' ),
-            'singular_name'      => __( 'Match' ),
+        $labels = array(
+            'name'               => __( 'Singles Matches' ),
+            'singular_name'      => __( 'Singles Match' ),
         );
 
         $args = array(
-            'labels'             => $labels,
-            'description'        => __( 'Match post type for recording foosball match data' ),
-            'public'             => TRUE,
-            'publicly_queryable' => TRUE,
-            'show_ui'            => TRUE,
-            'show_in_menu'       => TRUE,
-            'query_var'          => TRUE,
-            'has_archive'        => TRUE,
-            'rewrite'            => array('slug'    =>  'matches'),
-            'supports'           => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments')
+            'labels'             => array(
+                'name'               => _x( 'Singles Matches', 'post type general name' ),
+                'singular_name'      => _x( 'Singles Match', 'post type singular name' ),
+                'menu_name'          => _x( 'Singles Matches', 'admin menu' ),
+                'name_admin_bar'     => _x( 'Singles Match', 'add new on admin bar' ),
+                'add_new'            => _x( 'Add New', 'singles match' ),
+                'add_new_item'       => __( 'Add New Singles Match' ),
+                'new_item'           => __( 'New Singles Match' ),
+                'edit_item'          => __( 'Edit Singles Match' ),
+                'view_item'          => __( 'View Singles Match' ),
+                'all_items'          => __( 'All Singles Matches' ),
+                'search_items'       => __( 'Search Singles Matches' ),
+                'parent_item_colon'  => __( 'Parent Singles Matches:' ),
+                'not_found'          => __( 'No singles matches found.' ),
+                'not_found_in_trash' => __( 'No singles matches found in Trash.' )
+            ),
+            'public'             => true,
+            'publicly_queryable' => false,
+            'show_ui'            => true,
+            'show_in_menu'       => true,
+            'query_var'          => true,
+            'capability_type'    => 'post',
+            'has_archive'        => false,
+            'hierarchical'       => false,
+            'menu_position'      => null,
+            'supports'           => array( 'title' ),
         );
-        register_post_type( 'match', $args);
-
-        register_meta( 'match', 'player1_id', array(
-            'type'          => 'number',
-            'single'        => TRUE,
-        ));
-        register_meta( 'match', 'player2_id', array(
-            'type'          => 'number',
-            'single'        => TRUE,
-        ));
-        register_meta( 'match', 'player3_id', array(
-            'type'          => 'number',
-            'single'        => TRUE,
-        ));
-        register_meta( 'match', 'player4_id', array(
-            'type'          => 'number',
-            'single'        => TRUE,
-        ));
-        register_meta( 'match', 'is_final', array(
-            'type'          => 'boolean',
-            'single'        => TRUE,
-        ));
-        register_meta( 'match', 'team1_score1', array(
-            'type'          => 'integer',
-            'single'        => TRUE,
-        ));
-        register_meta( 'match', 'team2_score1', array(
-            'type'          => 'integer',
-            'single'        => TRUE,
-        ));
-        register_meta( 'match', 'team1_score2', array(
-            'type'          => 'integer',
-            'single'        => TRUE,
-        ));
-        register_meta( 'match', 'team2_score2', array(
-            'type'          => 'integer',
-            'single'        => TRUE,
-        ));
-    }
-
-    /**
-     * Redirection function hooked into template_redirect. Checks for matchid parameter and finds existing match of
-     * the player id parameters or creates new match with given player id parameters
-     */
-    public function foos_matches_redirect() {
-        if (is_post_type_archive('match')) {
-            // user is accessing new match or potentially existing match
-            if (isset($_POST['p1id']) && isset($_POST['p2id'])) {
-                $current_user_id = get_current_user_id();
-                $p1_id = intval($_POST['p1id']);
-                $p2_id = intval($_POST['p2id']);
-
-                // check if player ids exist
-                // prevent other users from creating matches for other players
-                // and from creating matches with themselves
-                if (!$this->user_id_exists($p1_id) || !$this->user_id_exists($p2_id)
-                    || ($current_user_id != $p1_id && $current_user_id != $p2_id)
-                    || ($current_user_id == $p1_id && $current_user_id == $p2_id)) {
-                    return;
-                }
-
-                // check if match already exists
-                $args = array(
-                    'post_type' => 'match',
-                    'meta_query' => array(
-                        'relation' => 'OR',
-                        array(
-                            'relation' => 'AND',
-                            array(
-                                'key' => 'player1_id',
-                                'value' => $p1_id,
-                                'compare' => '=',
-                            ),
-                            array(
-                                'key' => 'player3_id',
-                                'value' => $p2_id,
-                                'compare' => '='
-                            ),
-                            array(
-                                'key' => 'is_final',
-                                'value' => 0,
-                                'compare' => '='
-                            )
-                        ),
-                        array(
-                            'relation' => 'AND',
-                            array(
-                                'key' => 'player1_id',
-                                'value' => $p2_id,
-                                'compare' => '=',
-                            ),
-                            array(
-                                'key' => 'player3_id',
-                                'value' => $p1_id,
-                                'compare' => '='
-                            ),
-                            array(
-                                'key' => 'is_final',
-                                'value' => 0,
-                                'compare' => '='
-                            )
-                        )
-                    )
-                );
-                $wp_query = new WP_Query($args);
-                $existing_match_id = $wp_query->get_posts();
-
-                if (count($existing_match_id) > 0) {
-                    wp_redirect(get_permalink($existing_match_id[0]->ID));
-                    exit;
-                }
-
-                $p1_user = get_userdata($p1_id);
-                $p2_user = get_userdata($p2_id);
-
-                $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
-                $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
-
-                // create match post
-                $new_match_id = wp_insert_post(array(
-                    'post_type' => 'match',
-                    'post_title' => $p1_name . ' vs. ' . $p2_name,
-                    'post_status' => 'publish',
-                    'meta_input' => array(
-                        'player1_id' => $p1_id,
-                        'player3_id' => $p2_id,
-                        'is_final' => 0,
-                        'team1_score1' => 0,
-                        'team2_score1' => 0,
-                        'team1_score2' => 0,
-                        'team2_score2' => 0
-                    )
-                ));
-
-                wp_update_post(array(
-                    'ID' => $new_match_id,
-                    'post_name' => $new_match_id
-                ));
-
-                // query for custom post type
-                wp_redirect(get_permalink($new_match_id));
-                exit;
-
-            }
-        }
+        register_post_type( 'singles_match', $args);
     }
 
     public function tml_user_register_names( $user_id ) {
@@ -435,36 +307,6 @@ class Wp_Foosnines_Public {
     }
 
     // -------------------- HELPER FUNCTIONS ----------------------
-
-    function user_id_exists($user_id){
-        global $wpdb;
-
-        $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->users WHERE ID = %d", $user_id));
-
-        if($count == 1){ return TRUE; }else{ return FALSE; }
-    }
-
-    /**
-     * A super effective way to destroy someone's ego when they try to $%@! with your site.
-     *
-     * @param $message      string     A public announcement to destroy someones reputation
-     */
-    private function counter_attack( $message ) {
-        $current_user_id = get_current_user_id();
-        update_user_meta($current_user_id, 'losses', intval(get_user_meta($current_user_id, 'losses', TRUE)) + 1);
-        update_user_meta(2, wins, intval(get_user_meta(2, 'wins', TRUE)) + 1);
-        // TODO: add as match to public matches board with message for public humiliation
-    }
-
-    private function validate_scores($team1score, $team2score) {
-        if ($team1score < 0 || $team1score > 5 || ($team1score == $team2score && $team1score == 5)) {
-            return FALSE;
-        }
-        if ($team2score < 0 || $team2score > 5) {
-            return FALSE;
-        }
-        return TRUE;
-    }
 
     /**
      * Precondition: match exists and all team scores exist and are valid.
