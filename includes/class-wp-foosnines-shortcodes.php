@@ -402,6 +402,14 @@ class Wp_Foosnines_Shortcodes {
             $this->create_singles_match($p1_id, $p2_id);
         }
         
+        // attempt to submit a match score
+        if (isset($_POST['match_id']) && isset($_POST['p1_score']) && isset($_POST['p2_score'])) {
+            $match_id = intval($_POST['match_id']);
+            $p1_score = intval($_POST['p1_score']);
+            $p2_score = intval($_POST['p2_score']);
+            $this->submit_score($match_id, $p1_score, $p2_score);
+        }
+        
         $curr_user_id = get_current_user_id();
         $inp_singles = $this->get_user_inp_singles($curr_user_id);
         ob_start(); ?>
@@ -433,8 +441,9 @@ class Wp_Foosnines_Shortcodes {
         </div>
         <div class="col-xs-3 foos-score-box-form" style="text-align:center;">
             <form method="post">
+                <input type="hidden" name="match_id" value="<?php echo $match_id ?>">
                 <h3><input type="text" name="p1_score" value="<?php echo $p1_score ?>">-<input type="text" name="p2_score" value="<?php echo $p2_score ?>"></h3>
-                <?php if ($p1_score == 0 xor $p2_score == 5) : ?>
+                <?php if ($p1_score == 5 xor $p2_score == 5) : ?>
                     <button type="submit" class="btn btn-success">Accept</button>
                 <?php else: ?>
                     <button type="submit" class="btn btn-primary">Submit</button>
@@ -542,6 +551,8 @@ class Wp_Foosnines_Shortcodes {
                 'p1_score'  => 0,
                 'p2_score'  => 0,
                 'is_final' => 0,
+                'p1_accept' => 0,
+                'p2_accept' => 0
             )
         ));
     }
@@ -654,6 +665,55 @@ class Wp_Foosnines_Shortcodes {
         $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->users WHERE ID = %d", $user_id));
 
         if($count == 1){ return TRUE; }else{ return FALSE; }
+    }
+    
+    private function submit_score($match_id, $p1_score, $p2_score) {
+        if (get_post_meta($match_id, 'is_final', true)) return;    // cannot submit score of final match
+        $curr_user_id = get_current_user_id();
+        $p1_id = get_post_meta($match_id, 'p1_id', true);
+        $p2_id = get_post_meta($match_id, 'p2_id', true);
+
+        if (!$this->user_id_exists($p1_id) || !$this->user_id_exists($p2_id)
+            || ($curr_user_id != $p1_id && $curr_user_id != $p2_id)
+            || ($curr_user_id == $p1_id && $curr_user_id == $p2_id)) {
+            return;
+        }
+
+        // update score acceptance
+        if ($curr_user_id == $p1_id) {
+            update_post_meta($match_id, 'p1_accept', 1);
+        } else {
+            update_post_meta($match_id, 'p2_accept', 1);
+        }
+        
+        $prev_p1_score = get_post_meta($match_id, 'p1_score', true);
+        $prev_p2_score = get_post_meta($match_id, 'p2_score', true);
+
+        // change score
+        if (($prev_p1_score != $p1_score || $prev_p2_score != $p2_score) && $p1_score > -1 && $p1_score < 6 && $p2_score > -1 && $p2_score < 6) {
+            update_post_meta($match_id, 'p1_score', $p1_score);
+            update_post_meta($match_id, 'p2_score', $p2_score);
+            if ($curr_user_id == $p1_id) {
+                update_post_meta($match_id, 'p2_accept', 0);
+            } else {
+                update_post_meta($match_id, 'p1_accept', 0);
+            }
+            return;
+        }
+        
+        $p1_accept = get_post_meta($match_id, 'p1_accept', true);
+        $p2_accept = get_post_meta($match_id, 'p2_accept', true);
+        
+        if ($p1_accept && $p2_accept && ($p1_score == 5 xor $p2_score == 5)) {  // finalize match
+            update_post_meta($match_id, 'is_final', true);
+            if ($p1_score == 5) {
+                update_user_meta($p1_id, 'wins', intval(get_user_meta($p1_id, 'wins', TRUE)) + 1);
+                update_user_meta($p2_id, 'losses', intval(get_user_meta($p2_id, 'losses', TRUE)) + 1);
+            } else {
+                update_user_meta($p2_id, 'wins', intval(get_user_meta($p2_id, 'wins', TRUE)) + 1);
+                update_user_meta($p1_id, 'losses', intval(get_user_meta($p1_id, 'losses', TRUE)) + 1);
+            }
+        }
     }
 }
 
