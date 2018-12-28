@@ -343,7 +343,7 @@ class Wp_Foosnines_Shortcodes {
             'meta_query'    => [
                 [
                     'key'   => 'is_final',
-                    'value' => '0',
+                    'value' => '1',
                     'compare' => '='
                 ]
             ],
@@ -353,9 +353,9 @@ class Wp_Foosnines_Shortcodes {
         
         ob_start(); ?>
 <div class="container-flex" style="margin-bottom:50px;">
-    <div class="row">
-        <div class="col" style="text-align:center;"><h1>Singles</h1></div>
-        <div class="col" style="text-align:center;"><h1>Doubles</h1></div>
+    <div class="row justify-content-md-center">
+        <div class="col-sm-5 foos-menu-selector" id="inp_btn"><h1 style="margin-top:10px;">Singles</h1></div>
+        <div class="col-sm-5 foos-menu-selector" id="final_btn"><h1 style="margin-top:10px;">Doubles</h1></div>
     </div>
 </div>
 
@@ -403,24 +403,27 @@ class Wp_Foosnines_Shortcodes {
         }
         
         // attempt to submit a match score
+        $valid_submit = true;
         if (isset($_POST['match_id']) && isset($_POST['p1_score']) && isset($_POST['p2_score'])) {
-            $match_id = intval($_POST['match_id']);
+            $submit_match_id = intval($_POST['match_id']);
             $p1_score = intval($_POST['p1_score']);
             $p2_score = intval($_POST['p2_score']);
-            $this->submit_score($match_id, $p1_score, $p2_score);
+            $valid_submit = $this->submit_score($submit_match_id, $p1_score, $p2_score);
         }
         
         $curr_user_id = get_current_user_id();
         $inp_singles = $this->get_user_inp_singles($curr_user_id);
+        $final_singles = $this->get_user_final_singles($curr_user_id);
+        
         ob_start(); ?>
 <div class="container-flex" style="margin-bottom:50px;">
     <div class="row justify-content-md-center">
-        <div class="col" style="text-align:center;"><h1>In Progress</h1></div>
-        <div class="col" style="text-align:center;"><h1>Final</h1></div>
+        <div class="col-sm-5 foos-menu-selector" id="inp_btn"><h1 style="margin-top:10px;">In Progress</h1></div>
+        <div class="col-sm-5 foos-menu-selector" id="final_btn"><h1 style="margin-top:10px;">Final</h1></div>
     </div>
 </div>
 <!-- inp singles matches -->
-<div class="container-flex">
+<div class="container-flex" id="inp_matches">
         <?php
         foreach ($inp_singles as $match_id) :
             $p1_id = get_post_meta($match_id, 'p1_id', true);
@@ -431,8 +434,11 @@ class Wp_Foosnines_Shortcodes {
             $p2_user = get_userdata($p2_id);
             $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
             $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
+            $waiting = false;
+            if ($p1_id == $curr_user_id && get_post_meta($match_id, 'p1_accept', true)) $waiting = true;
+            if ($p2_id == $curr_user_id && get_post_meta($match_id, 'p2_accept', true)) $waiting = true;
             ?>
-    <div class="row justify-content-md-center">
+    <div class="row justify-content-md-center" style="padding-bottom: 50px;">
         <div class="col-sm-3">
             <div class="row">
                 <div class="col-"><img src="<?php echo get_avatar_url($p1_id, ['size' => 40]) ?>"></div>
@@ -442,11 +448,18 @@ class Wp_Foosnines_Shortcodes {
         <div class="col-xs-3 foos-score-box-form" style="text-align:center;">
             <form method="post">
                 <input type="hidden" name="match_id" value="<?php echo $match_id ?>">
-                <h3><input type="text" name="p1_score" value="<?php echo $p1_score ?>">-<input type="text" name="p2_score" value="<?php echo $p2_score ?>"></h3>
-                <?php if ($p1_score == 5 xor $p2_score == 5) : ?>
+                <h3><input type="text" name="p1_score" value="<?php echo $p1_score ?>" autocomplete="off">-<input type="text" name="p2_score" value="<?php echo $p2_score ?>" autocomplete="off"></h3>
+                <?php if (!$waiting && ($p1_score == 5 xor $p2_score == 5)): ?>
                     <button type="submit" class="btn btn-success">Accept</button>
                 <?php else: ?>
                     <button type="submit" class="btn btn-primary">Submit</button>
+                <?php endif; ?>
+                    
+                <?php if ($submit_match_id == $match_id && !$valid_submit) :    // error message ?>
+                    <p>You can't submit that score you crazy person!</p>
+                <?php endif;
+                if ($waiting) : ?>
+                    <p>Waiting for opponent to accept</p>
                 <?php endif; ?>
             </form>
         </div>
@@ -458,15 +471,68 @@ class Wp_Foosnines_Shortcodes {
         </div>
     </div>
             <?php
+        endforeach; 
+        if (count($inp_singles) == 0) : ?> 
+    <div style='text-align: center;'>
+        <h3>You aren't in any current matches.</h3>
+    </div>
+        <?php endif; ?>
+</div>
+<!-- final matches -->
+<div class="container-flex" id="final_matches" style='display:none;'>
+    <?php
+        foreach ($final_singles as $match_id) :
+            $p1_id = get_post_meta($match_id, 'p1_id', true);
+            $p2_id = get_post_meta($match_id, 'p2_id', true);
+            $p1_user = get_userdata($p1_id);
+            $p2_user = get_userdata($p2_id);
+            $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
+            $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
+            $p1_score = get_post_meta($match_id, 'p1_score', true);
+            $p2_score = get_post_meta($match_id, 'p2_score', true);
+            ?>
+    <div class="row justify-content-md-center" style="padding-bottom: 20px;">
+        <div class="col-sm-3">
+            <div class="row">
+                <div class="col-"><img src="<?php echo get_avatar_url($p1_id, ['size' => 40]) ?>"></div>
+                <div class="col"><h3><?php echo $p1_name ?></h3></div>
+            </div>
+        </div>
+        <div class="col-sm-3" style="text-align:center;">
+            <?php if (($p1_id == get_current_user_id() && $p1_score == 5) || ($p2_id == get_current_user_id() && $p2_score == 5)) : ?>
+            <h3>W</h3> <?php else: ?> <h3>L</h3><?php endif; ?><h3><?php echo $p1_score ?> - <?php echo $p2_score ?></h3>
+        </div>
+        <div class="col-sm-3" style="text-align:right;">
+            <div class="row">
+                <div class="col"><h3><?php echo $p2_name ?></h3></div>
+                <div class="col-"><img src="<?php echo get_avatar_url($p2_id, ['size' => 40]) ?>"></div>
+            </div>
+        </div>
+    </div>
+            <?php
         endforeach; ?>
 </div>
+
 <script>
-    jQuery('.foos-score-box-form input').change(function() {
-        var submit_btn = jQuery('.foos-score-box-form button');
-        submit_btn.removeClass('btn-success');
-        submit_btn.addClass('btn-primary');
-        submit_btn.text('Submit');
-    });
+    (function($) {
+        $('.foos-score-box-form input').change(function() {
+            var submit_btn = jQuery('.foos-score-box-form button');
+            submit_btn.removeClass('btn-success');
+            submit_btn.addClass('btn-primary');
+            submit_btn.text('Submit');
+        });
+        $('.foos-score-box-form input').click(function() {this.select();});
+        
+        $('#inp_btn').click(function() {
+            $('#inp_matches').show();
+            $('#final_matches').hide();
+        });
+        $('#final_btn').click(function() {
+            $('#inp_matches').hide();
+            $('#final_matches').show();
+        });
+    })(jQuery);
+    
 </script>
         <?php
         return ob_get_clean();
@@ -676,31 +742,35 @@ class Wp_Foosnines_Shortcodes {
         if (!$this->user_id_exists($p1_id) || !$this->user_id_exists($p2_id)
             || ($curr_user_id != $p1_id && $curr_user_id != $p2_id)
             || ($curr_user_id == $p1_id && $curr_user_id == $p2_id)) {
-            return;
+            return false;
         }
 
-        // update score acceptance
+        // set current player
         if ($curr_user_id == $p1_id) {
-            update_post_meta($match_id, 'p1_accept', 1);
+            $curr_player = 'p1';
+            $opp_player = 'p2';
         } else {
-            update_post_meta($match_id, 'p2_accept', 1);
+            $curr_player = 'p2';
+            $opp_player = 'p1';
         }
-        
+       
         $prev_p1_score = get_post_meta($match_id, 'p1_score', true);
         $prev_p2_score = get_post_meta($match_id, 'p2_score', true);
 
-        // change score
-        if (($prev_p1_score != $p1_score || $prev_p2_score != $p2_score) && $p1_score > -1 && $p1_score < 6 && $p2_score > -1 && $p2_score < 6) {
+        if (($prev_p1_score != $p1_score || $prev_p2_score != $p2_score)) { // change score
+            if  (($p1_score == 5 && $p2_score == 5) || $p1_score < 0 || $p1_score > 5 || $p2_score < 0 || $p2_score > 5) {  // invalid score
+                return false;
+            }
             update_post_meta($match_id, 'p1_score', $p1_score);
             update_post_meta($match_id, 'p2_score', $p2_score);
-            if ($curr_user_id == $p1_id) {
-                update_post_meta($match_id, 'p2_accept', 0);
-            } else {
-                update_post_meta($match_id, 'p1_accept', 0);
-            }
-            return;
+            update_post_meta($match_id, $curr_player.'_accept', 1);
+            update_post_meta($match_id, $opp_player.'_accept', 0);
+            return true;
         }
         
+        // current user accepts score
+        update_post_meta($match_id, $curr_player.'_accept', 1);
+
         $p1_accept = get_post_meta($match_id, 'p1_accept', true);
         $p2_accept = get_post_meta($match_id, 'p2_accept', true);
         
@@ -713,6 +783,7 @@ class Wp_Foosnines_Shortcodes {
                 update_user_meta($p2_id, 'wins', intval(get_user_meta($p2_id, 'wins', TRUE)) + 1);
                 update_user_meta($p1_id, 'losses', intval(get_user_meta($p1_id, 'losses', TRUE)) + 1);
             }
+            return true;
         }
     }
 }
