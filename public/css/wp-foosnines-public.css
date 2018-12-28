@@ -10,6 +10,7 @@
 .foos-menu-selector {
     text-align: center;
     border-radius: 5px;
+    margin: 10px;
 }
 
 .foos-menu-selector:hover {

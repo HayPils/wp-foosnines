@@ -354,8 +354,8 @@ class Wp_Foosnines_Shortcodes {
         ob_start(); ?>
 <div class="container-flex" style="margin-bottom:50px;">
     <div class="row justify-content-md-center">
-        <div class="col-sm-5 foos-menu-selector" id="inp_btn"><h1 style="margin-top:10px;">Singles</h1></div>
-        <div class="col-sm-5 foos-menu-selector" id="final_btn"><h1 style="margin-top:10px;">Doubles</h1></div>
+        <div class="col-sm-5 foos-menu-selector" style="background-color:lightgray;"><h1 style="margin-top:10px;">Singles</h1></div>
+        <div class="col-sm-5 foos-menu-selector"><h1 style="margin-top:10px;">Doubles</h1></div>
     </div>
 </div>
 
@@ -395,6 +395,7 @@ class Wp_Foosnines_Shortcodes {
     }
     
     public function my_matches() {
+        update_user_meta(10, 'wins', 0);
         // attempt to create new match if player ids in request vars
         if (isset($_POST['p1id']) && isset($_POST['p2id'])) {
             $p1_id = intval($_POST['p1id']);
@@ -418,7 +419,7 @@ class Wp_Foosnines_Shortcodes {
         ob_start(); ?>
 <div class="container-flex" style="margin-bottom:50px;">
     <div class="row justify-content-md-center">
-        <div class="col-sm-5 foos-menu-selector" id="inp_btn"><h1 style="margin-top:10px;">In Progress</h1></div>
+        <div class="col-sm-5 foos-menu-selector" id="inp_btn" style="background-color:lightgray;"><h1 style="margin-top:10px;">In Progress</h1></div>
         <div class="col-sm-5 foos-menu-selector" id="final_btn"><h1 style="margin-top:10px;">Final</h1></div>
     </div>
 </div>
@@ -474,7 +475,8 @@ class Wp_Foosnines_Shortcodes {
         endforeach; 
         if (count($inp_singles) == 0) : ?> 
     <div style='text-align: center;'>
-        <h3>You aren't in any current matches.</h3>
+        <h3>You aren't in any matches.</h3>
+        <a class="et_pb_button et_pb_promo_button" href="<?php echo get_site_url().'/match-recorder/' ?>">Setup a match</a>
     </div>
         <?php endif; ?>
 </div>
@@ -524,10 +526,14 @@ class Wp_Foosnines_Shortcodes {
         $('.foos-score-box-form input').click(function() {this.select();});
         
         $('#inp_btn').click(function() {
+            $(this).css('background-color', 'lightgray');
+            $('#final_btn').css('background-color', '');
             $('#inp_matches').show();
             $('#final_matches').hide();
         });
         $('#final_btn').click(function() {
+            $(this).css('background-color', 'lightgray');
+            $('#inp_btn').css('background-color', '');
             $('#inp_matches').hide();
             $('#final_matches').show();
         });
