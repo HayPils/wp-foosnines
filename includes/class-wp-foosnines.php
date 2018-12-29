@@ -177,9 +177,6 @@ class Wp_Foosnines {
 
 		$plugin_public = new Wp_Foosnines_Public( $this->get_plugin_name(), $this->get_version() );
 
-		/* FILTER HOOK REGISTRAION */
-                $this->loader->add_filter('the_content', $plugin_public, 'foos_match_page_body');
-
                 /* ACTION HOOK REGISTRATION */
                 // load public facing styles and scripts
                 $this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
