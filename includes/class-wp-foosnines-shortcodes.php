@@ -99,12 +99,11 @@ class Wp_Foosnines_Shortcodes {
         $rank_counter = 1;
         // fill table with all players
         for ($i = 0; $i < $num_of_players; $i++ ) {
-                $player = $all_players[$i];
-                $player_wins = get_user_meta($player->ID, 'foos_wins', TRUE);
-                $player_losses = get_user_meta($player->ID, 'foos_losses', TRUE);
-                $wl_ratio = round(($player_losses == 0) ? $player_wins : (float)$player_wins / (float)$player_losses, 2);
-            if ($player_wins + $player_losses != 0 &&
-                strcmp(trim($player->first_name), "") != 0 && strcmp(trim($player->last_name), "") != 0) {
+            $player = $all_players[$i];
+            $player_wins = intval(get_user_meta($player->ID, 'foos_wins', TRUE));
+            $player_losses = intval(get_user_meta($player->ID, 'foos_losses', TRUE));
+            $wl_ratio = round(($player_losses == 0) ? $player_wins : (float)$player_wins / (float)$player_losses, 2);
+            if ($player_wins + $player_losses != 0) {
                 $toRet .= "<tr>
                         <td>" . $rank_counter . "</td>
                         <td style='padding-top:12px;'>" . get_avatar($player->ID, 60) . "</td>
@@ -342,7 +341,6 @@ class Wp_Foosnines_Shortcodes {
             'fields'    => 'ids'
         ]);
         $singles_ids = $singles_ids->posts;
-        
         ob_start(); ?>
 <div class="container-flex" style="margin-bottom:50px;">
     <div class="row justify-content-md-center">
