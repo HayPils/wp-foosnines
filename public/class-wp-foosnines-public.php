@@ -256,11 +256,11 @@ class Wp_Foosnines_Public {
             }
 
             // includes updated win/loss stats if match is completed
-            $player_1_wins = get_user_meta($match_p1, 'wins', TRUE);
-            $player_1_losses = get_user_meta($match_p1, 'losses', TRUE);
+            $player_1_wins = get_user_meta($match_p1, 'foos_wins', TRUE);
+            $player_1_losses = get_user_meta($match_p1, 'foos_losses', TRUE);
 
-            $player_2_wins = get_user_meta($match_p2, 'wins', TRUE);
-            $player_2_losses = get_user_meta($match_p2, 'losses', TRUE);
+            $player_2_wins = get_user_meta($match_p2, 'foos_wins', TRUE);
+            $player_2_losses = get_user_meta($match_p2, 'foos_losses', TRUE);
 
 
             return '<form method="post">
@@ -332,8 +332,8 @@ class Wp_Foosnines_Public {
             // finalize match
             if ($team1score1 == 5) {
                 update_post_meta($match_id, 'is_final', 1);
-                update_user_meta($p1_id, 'wins', intval(get_user_meta($p1_id, 'wins', TRUE)) + 1);
-                update_user_meta($p2_id, 'losses', intval(get_user_meta($p2_id, 'losses', TRUE)) + 1);
+                update_user_meta($p1_id, 'foos_wins', intval(get_user_meta($p1_id, 'foos_wins', TRUE)) + 1);
+                update_user_meta($p2_id, 'foos_losses', intval(get_user_meta($p2_id, 'foos_losses', TRUE)) + 1);
                 wp_update_post( array (
                         'ID'            => $match_id,
                         'post_title'    => get_post( $match_id )->post_title . ' (' . $team1score1 . ' - ' . $team2score1 . ')',
@@ -343,8 +343,8 @@ class Wp_Foosnines_Public {
             }
             if ($team2score1 == 5) {
                 update_post_meta($match_id, 'is_final', 1);
-                update_user_meta($p2_id, 'wins', intval(get_user_meta($p2_id, 'wins', TRUE)) + 1);
-                update_user_meta($p1_id, 'losses', intval(get_user_meta($p1_id, 'losses', TRUE)) + 1);
+                update_user_meta($p2_id, 'foos_wins', intval(get_user_meta($p2_id, 'foos_wins', TRUE)) + 1);
+                update_user_meta($p1_id, 'foos_losses', intval(get_user_meta($p1_id, 'foos_losses', TRUE)) + 1);
                 wp_update_post( array (
                         'ID'            => $match_id,
                         'post_title'    => get_post( $match_id )->post_title . ' (' . $team1score1 . ' - ' . $team2score1 . ')',
@@ -369,6 +369,11 @@ class Wp_Foosnines_Public {
             return 'Score must match your opponent\'s score!';
         }
         return 'Score submitted! Continue the game and resubmit final score later.';
+    }
+    
+    private function get_avatar_url($get_avatar){
+        preg_match('/src="(.*?)"/i', $get_avatar, $matches);
+        return $matches[1];
     }
 
 }

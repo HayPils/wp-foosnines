@@ -63,9 +63,9 @@ class Wp_Foosnines_Shortcodes {
      * @tag foosleaderboard
      * @since 1.0.0
      */
-	public function foos_gen_leader_board( $atts ) {
-	    $curr_blog_id = get_current_blog_id();
-	    // players to display in rows on leader board in ranked order
+    public function foos_gen_leader_board( $atts ) {
+        $curr_blog_id = get_current_blog_id();
+        // players to display in rows on leader board in ranked order
         $all_players = get_users( 'blog_id='.$curr_blog_id.'&orderby=nicename' );
         if (isset($atts['top'])) {
             $num_of_players = intval($atts['top']);
@@ -100,16 +100,15 @@ class Wp_Foosnines_Shortcodes {
         // fill table with all players
         for ($i = 0; $i < $num_of_players; $i++ ) {
                 $player = $all_players[$i];
-                $player_wins = get_user_meta($player->ID, 'wins', TRUE);
-                $player_losses = get_user_meta($player->ID, 'losses', TRUE);
+                $player_wins = get_user_meta($player->ID, 'foos_wins', TRUE);
+                $player_losses = get_user_meta($player->ID, 'foos_losses', TRUE);
                 $wl_ratio = round(($player_losses == 0) ? $player_wins : (float)$player_wins / (float)$player_losses, 2);
             if ($player_wins + $player_losses != 0 &&
                 strcmp(trim($player->first_name), "") != 0 && strcmp(trim($player->last_name), "") != 0) {
                 $toRet .= "<tr>
                         <td>" . $rank_counter . "</td>
-                        <td><img src=\"" . get_avatar_url($player->ID, array('size' => 48)) . "\" style=\"padding-top: 5px\"></td>
-                        <td>" . get_user_meta($player->ID, 'first_name', TRUE) . " "
-                              . get_user_meta($player->ID, 'last_name', TRUE) . "</td>
+                        <td style='padding-top:12px;'>" . get_avatar($player->ID, 60) . "</td>
+                        <td>" . $player->display_name . "</td>
                         <td>" . $player_wins . "</td>
                         <td>" . $player_losses . "</td>
                         <td>" . $wl_ratio . "</td>
@@ -195,64 +194,52 @@ class Wp_Foosnines_Shortcodes {
                 <table style="margin-top: 10px;">
                        <tr>
                         <td>Name</td>
-                        <td>Nickname</td>
+                        <td>Display Name</td>
                         <td>Email</td>
                         <td>Wins</td>
                         <td>Losses</td>
                        </tr>';
 
         $player_counter = 0;
-        $player_js_array = '';
+        $player_js_array = [];
         foreach ($matched_players as $matched_player) {
             // populate doc search table
             if ($matched_player->ID !== get_current_user_id()) {
                 $doc .= '<tr id="player_' . $player_counter . '" data-user-id="' . $matched_player->ID . '" class="hover-tr">'
                     . '<td>' . $matched_player->first_name . ' ' . $matched_player->last_name . '</td>'
-                    . '<td>' . $matched_player->nickname . '</td>'
+                    . '<td>' . $matched_player->display_name . '</td>'
                     . '<td>' . $matched_player->user_email . '</td>'
-                    . '<td>' . $matched_player->wins . '</td>'
-                    . '<td>' . $matched_player->losses . '</td>'
+                    . '<td>' . $matched_player->foos_wins . '</td>'
+                    . '<td>' . $matched_player->foos_losses . '</td>'
                     . '</tr>';
 
                 // populate js array string
-                $player_js_array .= '["'
-                    . $matched_player->first_name . ' ' . $matched_player->last_name . '", "'
-                    . $matched_player->wins . '", "'
-                    . $matched_player->losses . '", "'
-                    . get_avatar_url($matched_player->ID, 30)
-                    . '"]';
-                if ($player_counter < count($matched_players) - 1) {
-                    $player_js_array .= ', ';
-                }
+                array_push($player_js_array, [
+                    'name' => $matched_player->first_name . " " . $matched_player->last_name,
+                    'wins' => $matched_player->foos_wins,
+                    'losses' =>$matched_player->foos_losses,
+                    'avatar' => get_avatar($matched_player->ID, 80)
+                ]);
                 $player_counter++;
             }
         }
         if ($player_counter === 0) {    // don't build table if no users can be listed
             return '';
         }
-
-        // get current user data
-        $current_user = wp_get_current_user();
-        $current_user_meta = get_user_meta(get_current_user_id());
-
+        
         $script = '<script>
-                    var matched_players = [' . $player_js_array . '];
-                    
-                    //set player 1 attributes
-                    jQuery("#player_1_avatar").attr("src", "' . get_avatar_url(get_current_user_id(), 30) . '");
-                    jQuery("#player_1_name").html("<b>' . $current_user->first_name . ' ' . $current_user->last_name . '</b>");
-                    jQuery("#p_1_wins").text("Wins: ' . $current_user_meta["wins"][0] . '");
-                    jQuery("#p_1_losses").text("Losses: ' . $current_user_meta["losses"][0] . '");
+                    var matched_players = ' . json_encode($player_js_array) . ';
                     
                     // Get the player button elements and set visibility functions for modals
                     for(var i = 0; i < ' . $player_counter . '; i++) {
                         var dummy = i;
                         jQuery("#player_" + i).click(function() {
                             // set player 2 attributes
-                            jQuery("#player_2_avatar").attr("src", matched_players[dummy][3]);
-                            jQuery("#player_2_name").html("<b>" + matched_players[dummy][0] + "</b>");
-                            jQuery("#p_2_wins").text("Wins: " + matched_players[dummy][1]);
-                            jQuery("#p_2_losses").text("Losses: " + matched_players[dummy][2]);
+                            jQuery("#player_2_avatar").empty();
+                            jQuery("#player_2_avatar").append(matched_players[dummy]["avatar"]);
+                            jQuery("#player_2_name").html("<b>" + matched_players[dummy]["name"] + "</b>");
+                            jQuery("#p_2_wins").text("Wins: " + matched_players[dummy]["wins"]);
+                            jQuery("#p_2_losses").text("Losses: " + matched_players[dummy]["losses"]);
                             
                             // set player data-opp-id to respective data-user-id
                             jQuery("#p2ID").attr("value", jQuery("#player_" + dummy).attr("data-user-id"));
@@ -269,55 +256,60 @@ class Wp_Foosnines_Shortcodes {
     }
 
     public function foos_start_match_modal() {
-        $doc = '<div id=startMatchModal class="modal fade" tabindex="-1" style="top: 15%" role="dialog">
-                  <div class="modal-dialog modal-lg" role="document">
-                    <div class="modal-content">
-                      <div class="modal-header" align="center">
-                        <h3 class="modal-title" style="margin: auto;">Singles Exhibition Match</h3>
+        // get current user data
+        $current_user = wp_get_current_user();
+        $current_user_meta = get_user_meta(get_current_user_id());
+        ob_start(); ?>
+        <div id=startMatchModal class="modal fade" tabindex="-1" style="top: 15%" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header" align="center">
+                  <h3 class="modal-title" style="margin: auto;">Singles Exhibition Match</h3>
+                </div>
+                <div class="modal-body">
+                  <div class="container">
+                      <div class="row">
+                          <div class="col" style="text-align:center">
+                              <?php echo get_avatar($current_user->ID, 80); ?>
+                              <h5 id="player_1_name" style="padding-top: 20px;"><b><?php echo $current_user->first_name . ' ' . $current_user->last_name ?></b></h5>
+                              <div class="row" style="margin: auto;">
+                                    <div id="p_1_wins" class="col">Wins: <?php echo $current_user_meta["foos_wins"][0] ?></div>
+                                    <div id="p_1_losses" class="col">Losses: <?php echo $current_user_meta["foos_losses"][0] ?></div>
+                              </div>
+                          </div>
+                          <div class="col-" style="padding-top: 10%"><h3><b>VS.</b></h3></div>
+                          <div class="col" style="text-align:center">
+                              <div id="player_2_avatar"></div>
+                              <h5 id="player_2_name" style="padding-top: 20px;"></h5>
+                              <div class="row" style="margin: auto;">
+                                  <div id="p_2_wins" class="col"></div>
+                                  <div id="p_2_losses" class="col"></div>
+                              </div>
+                          </div>
                       </div>
-                      <div class="modal-body">
-                        <div class="container">
-                            <div class="row">
-                                <div class="col" style="text-align:center">
-                                    <img id="player_1_avatar" src="" alt="Your profile avatar" style="margin-left: auto; margin-right: auto; display: block">
-                                    <h5 id="player_1_name" style="padding-top: 20px;"></h5>
-                                    <div class="row" style="margin: auto;">
-                                        <div id="p_1_wins" class="col"></div>
-                                        <div id="p_1_losses" class="col"></div>
-                                    </div>
-                                </div>
-                                <div class="col-" style="padding-top: 10%"><h3><b>VS.</b></h3></div>
-                                <div class="col" style="text-align:center">
-                                    <img id="player_2_avatar" src="" alt="Opponent profile avatar" style="margin-left: auto; margin-right: auto; display: block">
-                                    <h5 id="player_2_name" style="padding-top: 20px;"></h5>
-                                    <div class="row" style="margin: auto;">
-                                        <div id="p_2_wins" class="col"></div>
-                                        <div id="p_2_losses" class="col"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                      </div>
-                      <div class="modal-footer">
-                        <form action="http://foos.5nines.com/my-matches/" method="post">
-                            <input type="hidden" id="p1ID" name="p1id" value="' . get_current_user_id() . '">
-                            <input type="hidden" id="p2ID" name="p2id" value="">
-                            <button type="submit" id="startBtn" class="btn btn-primary">Start Match</button>
-                        </form>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                      </div>
-                    </div>
                   </div>
-                </div>';
+                </div>
+                <div class="modal-footer">
+                  <form action="http://foos.5nines.com/my-matches/" method="post">
+                      <input type="hidden" id="p1ID" name="p1id" value="<?php $current_user->ID ?>">
+                      <input type="hidden" id="p2ID" name="p2id" value="">
+                      <button type="submit" id="startBtn" class="btn btn-primary">Start Match</button>
+                  </form>
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
 
-	    $script = '<script>
-                    // move modal outside of divs to end of body for proper z-indexing
-                    jQuery(document).ready(function() {
-                        jQuery("#startMatchModal").appendTo(document.body);
-                    });
-                   </script>';
+        <script>
+            // move modal outside of divs to end of body for proper z-indexing
+            jQuery(document).ready(function() {
+                jQuery("#startMatchModal").appendTo(document.body);
+            });
+        </script>
 
-	    return $doc . $script;
+        <?php
+        return ob_get_clean();
     }
 
 
@@ -336,7 +328,7 @@ class Wp_Foosnines_Shortcodes {
         return $toRet;
     }
     
-    public function matches_archive() {
+    public function match_board() {
         // get all singles matches
         $singles_ids = new WP_Query([
             'post_type' => 'singles_match',
@@ -370,10 +362,10 @@ class Wp_Foosnines_Shortcodes {
             $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
             $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
             ?>
-    <div class="row justify-content-md-center">
+    <div class="row justify-content-md-center" style="margin-bottom:20px;">
         <div class="col-sm-3">
             <div class="row">
-                <div class="col-"><img src="<?php echo get_avatar_url($p1_id, ['size' => 40]) ?>"></div>
+                <div class="col-"><?php echo get_avatar($p1_id, 70) ?></div>
                 <div class="col"><h3><?php echo $p1_name ?></h3></div>
             </div>
         </div>
@@ -383,7 +375,7 @@ class Wp_Foosnines_Shortcodes {
         <div class="col-sm-3" style="text-align:right;">
             <div class="row">
                 <div class="col"><h3><?php echo $p2_name ?></h3></div>
-                <div class="col-"><img src="<?php echo get_avatar_url($p2_id, ['size' => 40]) ?>"></div>
+                <div class="col-"><?php echo get_avatar($p2_id, 70) ?></div>
             </div>
         </div>
     </div>
@@ -395,7 +387,6 @@ class Wp_Foosnines_Shortcodes {
     }
     
     public function my_matches() {
-        update_user_meta(10, 'wins', 0);
         // attempt to create new match if player ids in request vars
         if (isset($_POST['p1id']) && isset($_POST['p2id'])) {
             $p1_id = intval($_POST['p1id']);
@@ -433,16 +424,16 @@ class Wp_Foosnines_Shortcodes {
             $p2_score = get_post_meta($match_id, 'p2_score', true);
             $p1_user = get_userdata($p1_id);
             $p2_user = get_userdata($p2_id);
-            $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
-            $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
+            $p1_name = $p1_user->display_name;
+            $p2_name = $p2_user->display_name;
             $waiting = false;
             if ($p1_id == $curr_user_id && get_post_meta($match_id, 'p1_accept', true)) $waiting = true;
             if ($p2_id == $curr_user_id && get_post_meta($match_id, 'p2_accept', true)) $waiting = true;
             ?>
-    <div class="row justify-content-md-center" style="padding-bottom: 50px;">
+    <div class="row justify-content-md-center" style="margin-bottom: 50px;">
         <div class="col-sm-3">
             <div class="row">
-                <div class="col-"><img src="<?php echo get_avatar_url($p1_id, ['size' => 40]) ?>"></div>
+                <div class="col-"><?php echo get_avatar($p1_id, 70) ?></div>
                 <div class="col"><h3><?php echo $p1_name ?></h3></div>
             </div>
         </div>
@@ -467,7 +458,7 @@ class Wp_Foosnines_Shortcodes {
         <div class="col-sm-3" style="text-align:right;">
             <div class="row">
                 <div class="col"><h3><?php echo $p2_name ?></h3></div>
-                <div class="col-"><img src="<?php echo get_avatar_url($p2_id, ['size' => 40]) ?>"></div>
+                <div class="col-"><?php echo get_avatar($p2_id, 70) ?></div>
             </div>
         </div>
     </div>
@@ -488,15 +479,15 @@ class Wp_Foosnines_Shortcodes {
             $p2_id = get_post_meta($match_id, 'p2_id', true);
             $p1_user = get_userdata($p1_id);
             $p2_user = get_userdata($p2_id);
-            $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
-            $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
+            $p1_name = $p1_user->display_name;
+            $p2_name = $p2_user->display_name;
             $p1_score = get_post_meta($match_id, 'p1_score', true);
             $p2_score = get_post_meta($match_id, 'p2_score', true);
             ?>
-    <div class="row justify-content-md-center" style="padding-bottom: 20px;">
+    <div class="row justify-content-md-center" style="margin-bottom: 20px;">
         <div class="col-sm-3">
             <div class="row">
-                <div class="col-"><img src="<?php echo get_avatar_url($p1_id, ['size' => 40]) ?>"></div>
+                <div class="col-"><?php echo get_avatar($p1_id, 70) ?></div>
                 <div class="col"><h3><?php echo $p1_name ?></h3></div>
             </div>
         </div>
@@ -507,7 +498,7 @@ class Wp_Foosnines_Shortcodes {
         <div class="col-sm-3" style="text-align:right;">
             <div class="row">
                 <div class="col"><h3><?php echo $p2_name ?></h3></div>
-                <div class="col-"><img src="<?php echo get_avatar_url($p2_id, ['size' => 40]) ?>"></div>
+                <div class="col-"><?php echo get_avatar($p2_id, 70) ?></div>
             </div>
         </div>
     </div>
@@ -646,8 +637,8 @@ class Wp_Foosnines_Shortcodes {
                 'min_range' => -1
             )
         );
-        $wins = filter_var( get_user_meta( $user->ID, 'wins', TRUE ), FILTER_VALIDATE_INT, $options );
-        $losses = filter_var( get_user_meta( $user->ID, 'losses', TRUE ), FILTER_VALIDATE_INT, $options );
+        $wins = filter_var( get_user_meta( $user->ID, 'foos_wins', TRUE ), FILTER_VALIDATE_INT, $options );
+        $losses = filter_var( get_user_meta( $user->ID, 'foos_losses', TRUE ), FILTER_VALIDATE_INT, $options );
         if ( $wins == -1 || $losses == -1 ) {
             return FALSE;
         }
@@ -782,15 +773,50 @@ class Wp_Foosnines_Shortcodes {
         
         if ($p1_accept && $p2_accept && ($p1_score == 5 xor $p2_score == 5)) {  // finalize match
             update_post_meta($match_id, 'is_final', true);
-            if ($p1_score == 5) {
-                update_user_meta($p1_id, 'wins', intval(get_user_meta($p1_id, 'wins', TRUE)) + 1);
-                update_user_meta($p2_id, 'losses', intval(get_user_meta($p2_id, 'losses', TRUE)) + 1);
-            } else {
-                update_user_meta($p2_id, 'wins', intval(get_user_meta($p2_id, 'wins', TRUE)) + 1);
-                update_user_meta($p1_id, 'losses', intval(get_user_meta($p1_id, 'losses', TRUE)) + 1);
-            }
+            $this->update_player_data($p1_id, $p2_id, $p1_score, $p2_score);
             return true;
         }
+    }
+    
+    /*
+     * Precondition: scores are valid and final
+     */
+    private function update_player_data($p1_id, $p2_id, $p1_score, $p2_score) {
+        // update career goals
+        update_user_meta($p1_id, 'foos_g', intval(get_user_meta($p1_id, 'foos_g', TRUE)) + $p1_score);
+        update_user_meta($p2_id, 'foos_g', intval(get_user_meta($p2_id, 'foos_g', TRUE)) + $p2_score);
+        
+        // update career goals allowed
+        update_user_meta($p1_id, 'foos_ga', intval(get_user_meta($p1_id, 'foos_ga', TRUE)) + $p2_score);
+        update_user_meta($p2_id, 'foos_ga', intval(get_user_meta($p2_id, 'foos_ga', TRUE)) + $p1_score);
+        
+        
+        
+        if ($p1_score == 5) {   // p1 is winner
+            $winner_id = $p1_id;
+            $loser_id = $p2_id;
+        } else {    // p2 is winner
+            $winner_id = $p2_id;
+            $loser_id = $p1_id;
+        }
+        // update wins and losses
+        update_user_meta($winner_id, 'foos_wins', intval(get_user_meta($winner_id, 'foos_wins', TRUE)) + 1);
+        update_user_meta($loser_id, 'foos_losses', intval(get_user_meta($loser_id, 'foos_losses', TRUE)) + 1);
+
+        // update current win streaks
+        $curr_ws = intval(get_user_meta($winner_id, 'foos_ws', TRUE)) + 1;
+        update_user_meta($winner_id, 'foos_ws', $curr_ws);
+        update_user_meta($loser_id, 'foos_ws', 0);
+        
+        // update longest career wind streak
+        if ($curr_ws > get_user_meta($winner_id, 'foos_lws', true)) {
+            update_user_meta($winner_id, 'foos_lws', $curr_ws);
+        }
+    }
+    
+    private function get_avatar_url($get_avatar){
+        preg_match('/src="(.*?)"/i', $get_avatar, $matches);
+        return $matches[1];
     }
 }
 
