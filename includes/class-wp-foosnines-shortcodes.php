@@ -291,7 +291,7 @@ class Wp_Foosnines_Shortcodes {
                 </div>
                 <div class="modal-footer">
                   <form action="http://foos.5nines.com/my-matches/" method="post">
-                      <input type="hidden" id="p1ID" name="p1id" value="<?php $current_user->ID ?>">
+                      <input type="hidden" id="p1ID" name="p1id" value="<?php echo $current_user->ID ?>">
                       <input type="hidden" id="p2ID" name="p2id" value="">
                       <button type="submit" id="startBtn" class="btn btn-primary">Start Match</button>
                   </form>
