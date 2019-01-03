@@ -132,12 +132,12 @@ class Wp_Foosnines_Shortcodes {
                     array(
                         'key'     => 'first_name',
                         'value'   => $search_strings[0],
-                        'compare' => '='
+                        'compare' => 'LIKE'
                     ),
                     array(
                         'key'     => 'last_name',
                         'value'   => $search_strings[0],
-                        'compare' => '='
+                        'compare' => 'LIKE'
                     )
                 )
             );
@@ -148,22 +148,22 @@ class Wp_Foosnines_Shortcodes {
                     array(
                         'key'     => 'first_name',
                         'value'   => $search_strings[0],
-                        'compare' => '='
+                        'compare' => 'LIKE'
                     ),
                     array(
                         'key'     => 'last_name',
                         'value'   => $search_strings[0],
-                        'compare' => '='
+                        'compare' => 'LIKE'
                     ),
                     array(
                         'key'     => 'first_name',
                         'value'   => $search_strings[1],
-                        'compare' => '='
+                        'compare' => 'LIKE'
                     ),
                     array(
                         'key'     => 'last_name',
                         'value'   => $search_strings[1],
-                        'compare' => '='
+                        'compare' => 'LIKE'
                     ),
                 )
             );
