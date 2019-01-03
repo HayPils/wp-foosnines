@@ -637,8 +637,11 @@ class Wp_Foosnines_Shortcodes {
         );
         $wins = filter_var( get_user_meta( $user->ID, 'foos_wins', TRUE ), FILTER_VALIDATE_INT, $options );
         $losses = filter_var( get_user_meta( $user->ID, 'foos_losses', TRUE ), FILTER_VALIDATE_INT, $options );
-        if ( $wins == -1 || $losses == -1 ) {
-            return FALSE;
+        if ( $wins == -1 ) {
+            $wins = 0;
+        }
+        if ( $losses == -1 ) {
+            $losses = 0;
         }
         if ( $losses == 0 ) {
             return (float)($wins + 1) * $wins;
