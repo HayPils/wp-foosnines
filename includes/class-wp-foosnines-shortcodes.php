@@ -94,6 +94,7 @@ class Wp_Foosnines_Shortcodes {
                     <td>Wins</td>
                     <td>Losses</td>
                     <td>W/L Ratio</td>
+                    <td>Rating</td>
                   </tr>";
 
         $rank_counter = 1;
@@ -111,6 +112,7 @@ class Wp_Foosnines_Shortcodes {
                         <td>" . $player_wins . "</td>
                         <td>" . $player_losses . "</td>
                         <td>" . $wl_ratio . "</td>
+                        <td>" . $this->rating($player) . "</td>
                        </tr>";
                 $rank_counter++;
             }
