@@ -155,7 +155,7 @@ class Wp_Foosnines_Shortcodes {
     <!-- Record win streak -->
     <div class="row">
         <div class="col-sm-4">
-            <h2>Record Win Streak: </h2>
+            <h2>Record Win Streak ⚡ </h2>
         </div>
         <div class="col">
             <h3 style="margin-top:3px;">
@@ -175,7 +175,7 @@ class Wp_Foosnines_Shortcodes {
     <!-- Longest win streak (On fire >= 3 wins) -->
     <div class="row">        
         <div class="col-sm-4">
-            <h2>On Fire 🔥:</h2>
+            <h2>On Fire 🔥</h2>
         </div>
         <div class="col">
             <h3 style="margin-top:3px;">
@@ -288,7 +288,7 @@ class Wp_Foosnines_Shortcodes {
             if ($matched_player->ID !== get_current_user_id()) {
                 $doc .= '<tr id="player_' . $player_counter . '" data-user-id="' . $matched_player->ID . '" class="hover-tr">'
                     . '<td>' . $matched_player->first_name . ' ' . $matched_player->last_name . '</td>'
-                    . '<td>' . $matched_player->display_name . '</td>'
+                    . '<td>' . $this->foos_name($matched_player) . '</td>'
                     . '<td>' . $matched_player->user_email . '</td>'
                     . '<td>' . $matched_player->foos_wins . '</td>'
                     . '<td>' . $matched_player->foos_losses . '</td>'
@@ -296,7 +296,7 @@ class Wp_Foosnines_Shortcodes {
 
                 // populate js array string
                 array_push($player_js_array, [
-                    'name' => $matched_player->first_name . " " . $matched_player->last_name,
+                    'name' => $this->foos_name($matched_player),
                     'wins' => $matched_player->foos_wins,
                     'losses' =>$matched_player->foos_losses,
                     'avatar' => get_avatar($matched_player->ID, 80)
@@ -352,7 +352,7 @@ class Wp_Foosnines_Shortcodes {
                       <div class="row">
                           <div class="col" style="text-align:center">
                               <?php echo get_avatar($current_user->ID, 80); ?>
-                              <h5 id="player_1_name" style="padding-top: 20px;"><b><?php echo $current_user->first_name . ' ' . $current_user->last_name ?></b></h5>
+                              <h5 id="player_1_name" style="padding-top: 20px;"><b><?php echo $this->foos_name($current_user) ?></b></h5>
                               <div class="row" style="margin: auto;">
                                     <div id="p_1_wins" class="col">Wins: <?php echo $current_user_meta["foos_wins"][0] ?></div>
                                     <div id="p_1_losses" class="col">Losses: <?php echo $current_user_meta["foos_losses"][0] ?></div>
@@ -926,6 +926,7 @@ class Wp_Foosnines_Shortcodes {
             }
         }
         
+        // add medals
         if ($user->ID == $all_players[0]->ID) {   // add gold medal
             $foos_name .= ' 🥇';
         } 
@@ -936,6 +937,8 @@ class Wp_Foosnines_Shortcodes {
             $foos_name .= ' 🥉';
         }
         
+        
+        // add fire
         $max_streak = 0;
         $top_steakers = [];
         
@@ -952,6 +955,24 @@ class Wp_Foosnines_Shortcodes {
         
         foreach ($top_streakers as $streaker) {
             if ($max_streak > 2 && $streaker == $user->ID) $foos_name .= ' 🔥';
+        }
+        
+        // add lightning (lws)
+        $max_lws = 0;
+        $top_lws = [];
+        
+        foreach ($all_players as $player) {
+            $player_lws = get_user_meta($player->ID, 'foos_lws', true);   // get player longest win streak
+            // process longest win streak data
+            if ($player_lws > $max_lws) {
+                $top_lws = [$player->ID];
+                $max_lws = $player_lws;
+            } else if ($player_lws == $max_lws) {
+                array_push($top_lws, $player->ID);
+            }
+        }
+        foreach ($top_lws as $top_lws_player) {
+            if ($top_lws_player == $user->ID) $foos_name .= ' ⚡';
         }
         
         return $foos_name;
