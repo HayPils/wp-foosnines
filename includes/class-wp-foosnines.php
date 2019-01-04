@@ -187,6 +187,8 @@ class Wp_Foosnines {
                 $this->loader->add_action(  'shutdown', $plugin_public, 'deactivate_foos');
 
                 $this->loader->add_action( 'user_register', $plugin_public, 'tml_user_register_names' );
+                
+                $this->loader->add_filter( 'login_redirect', $plugin_public, 'redirect_to_profile' );
 
 	}
         
@@ -195,6 +197,7 @@ class Wp_Foosnines {
                 $plugin_shortcodes = new Wp_Foosnines_Shortcodes( $this->get_plugin_name(), $this->get_version() );
                         
                 $this->loader->add_shortcode( 'foos_leaderboard', $plugin_shortcodes, 'foos_gen_leader_board' );
+                $this->loader->add_shortcode( 'foos-top-stat-board', $plugin_shortcodes, 'top_stat_board' );
                 $this->loader->add_shortcode( 'foos-searchforplayer', $plugin_shortcodes, 'foos_search_for_player' );
                 $this->loader->add_shortcode( 'foos-playerinfo', $plugin_shortcodes, 'foos_player_info' );
                 $this->loader->add_shortcode( 'foos-startmatchmodal', $plugin_shortcodes, 'foos_start_match_modal' );

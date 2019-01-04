@@ -157,6 +157,12 @@ class Wp_Foosnines_Public {
             );
         }
     }
+    
+    function redirect_to_profile() {
+        $who = strtolower(sanitize_user($_POST['log']));
+        $redirect_to = get_option('home');
+        return $redirect_to;
+    }
 
 }
 

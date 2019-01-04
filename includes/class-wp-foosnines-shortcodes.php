@@ -108,16 +108,96 @@ class Wp_Foosnines_Shortcodes {
                 $toRet .= "<tr>
                         <td>" . $rank_counter . "</td>
                         <td style='padding-top:12px;'>" . get_avatar($player->ID, 60) . "</td>
-                        <td>" . $player->display_name . "</td>
+                        <td>" . $this->foos_name($player) . "</td>
                         <td>" . $player_wins . "</td>
                         <td>" . $player_losses . "</td>
                         <td>" . $wl_ratio . "</td>
-                        <td>" . $this->rating($player) . "</td>
+                        <td>" . round($this->rating($player), 2) . "</td>
                        </tr>";
                 $rank_counter++;
             }
         }
         return $toRet .= "</table>";
+    }
+    
+    public function top_stat_board() {
+        ob_start();
+        $all_players = get_users( 'blog_id='.$curr_blog_id.'&orderby=nicename' );
+        $max_streak = 0;
+        $max_lws = 0;
+        $top_steakers = [];
+        $top_lws = [];
+        
+        foreach ($all_players as $player) {
+            $player_streak = get_user_meta($player->ID, 'foos_ws', true);   // get player win streak
+            $player_lws = get_user_meta($player->ID, 'foos_lws', true);   // get player longest win streak
+
+            // process longest win streak data
+            if ($player_lws > $max_lws) {
+                $top_lws = [$player];
+                $max_lws = $player_lws;
+            } else if ($player_lws == $max_lws) {
+                array_push($top_lws, $player);
+            }
+
+            // process on fire data
+            if ($player_streak > $max_streak) {
+                $top_streakers = [$player];
+                $max_streak = $player_streak;
+            } else if ($player_streak == $max_streak){
+                array_push($top_streakers, $player);
+            }
+            
+        }
+        
+        ?>
+<div class="contianer-flex">
+    <!-- Record win streak -->
+    <div class="row">
+        <div class="col-sm-4">
+            <h2>Record Win Streak: </h2>
+        </div>
+        <div class="col">
+            <h3 style="margin-top:3px;">
+            <?php
+                for ($i = 0; $i < count($top_lws); $i++) {
+                    echo $top_lws[$i]->display_name;
+                    echo ($i < count($top_lws) - 1) ? ', ' : ' ';
+                }
+            ?>
+            </h3>
+        </div>
+        <div class="col-sm-2">
+            <h3 style="margin-top:3px;"><?php echo ''.$max_lws.' wins'; ?></h3>
+        </div>
+    </div>
+    
+    <!-- Longest win streak (On fire >= 3 wins) -->
+    <div class="row">        
+        <div class="col-sm-4">
+            <h2>On Fire 🔥:</h2>
+        </div>
+        <div class="col">
+            <h3 style="margin-top:3px;">
+            <?php
+                if ($max_streak > 2) {
+                     for ($i = 0; $i < count($top_streakers); $i++) {
+                         echo $top_streakers[$i]->display_name;
+                         echo ($i < count($top_streakers) - 1) ? ', ' : ' ';
+                     }
+                } else {
+                    echo 'No one is on fire 🥶';
+                }
+            ?>
+            </h3>
+        </div>
+        <div class="col-sm-2">
+            <h3 style="margin-top:3px;"><?php echo ($max_streak > 2) ? ''.$max_streak.' wins' : ''; ?></h3>
+        </div>
+    </div> 
+</div>
+        <?php
+        return ob_get_clean();
     }
 
     public function foos_search_for_player() {
@@ -333,6 +413,7 @@ class Wp_Foosnines_Shortcodes {
         // get all singles matches
         $singles_ids = new WP_Query([
             'post_type' => 'singles_match',
+            'posts_per_page'    => -1,
             'meta_query'    => [
                 [
                     'key'   => 'is_final',
@@ -359,8 +440,8 @@ class Wp_Foosnines_Shortcodes {
             $p2_id = get_post_meta($match_id, 'p2_id', true);
             $p1_user = get_userdata($p1_id);
             $p2_user = get_userdata($p2_id);
-            $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
-            $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
+            $p1_name = $p1_user->display_name;
+            $p2_name = $p2_user->display_name;
             ?>
     <div class="row justify-content-md-center" style="margin-bottom:20px;">
         <div class="col-sm-3">
@@ -821,5 +902,60 @@ class Wp_Foosnines_Shortcodes {
         preg_match('/src="(.*?)"/i', $get_avatar, $matches);
         return $matches[1];
     }
-}
+    
+    private function foos_name($user) {
+        $foos_name = $user->display_name;
+        
+        $curr_blog_id = get_current_blog_id();
+        // players to display in rows on leader board in ranked order
+        $all_players = get_users( 'blog_id='.$curr_blog_id.'&orderby=nicename' );
+        if (isset($atts['top'])) {
+            $num_of_players = intval($atts['top']);
+        } else {
+            $num_of_players = count($all_players);
+        }
+
+        // insertion sort all players in ranked order
+        for ($i = 1; $i < count($all_players); $i++) {
+            $index_shadow = $i;
+            while ( $index_shadow > 0 && $this->rating($all_players[$index_shadow - 1]) < $this->rating($all_players[$index_shadow]) ) {
+                $temp = $all_players[$index_shadow - 1]; // update previous player
+                $all_players[$index_shadow - 1] = $all_players[$index_shadow]; // swap lower ranked player back
+                $all_players[$index_shadow] = $temp;    // swap higher ranked player ahead
+                $index_shadow--;
+            }
+        }
+        
+        if ($user->ID == $all_players[0]->ID) {   // add gold medal
+            $foos_name .= ' 🥇';
+        } 
+        if ($user->ID == $all_players[1]->ID) {   // add silver medal
+            $foos_name .= ' 🥈';
+        }
+        if ($user->ID == $all_players[2]->ID) {   // add bronze medal
+            $foos_name .= ' 🥉';
+        }
+        
+        $max_streak = 0;
+        $top_steakers = [];
+        
+        foreach ($all_players as $player) {
+            $player_streak = get_user_meta($player->ID, 'foos_ws', true);   // get player win streak
+            // process on fire data
+            if ($player_streak > $max_streak) {
+                $top_streakers = [$player->ID];
+                $max_streak = $player_streak;
+            } else if ($player_streak == $max_streak){
+                array_push($top_streakers, $player->ID);
+            }
+        }
+        
+        foreach ($top_streakers as $streaker) {
+            if ($max_streak > 2 && $streaker == $user->ID) $foos_name .= ' 🔥';
+        }
+        
+        return $foos_name;
+    }
+
+ }
 
