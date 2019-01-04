@@ -505,8 +505,8 @@ class Wp_Foosnines_Shortcodes {
             $p2_score = get_post_meta($match_id, 'p2_score', true);
             $p1_user = get_userdata($p1_id);
             $p2_user = get_userdata($p2_id);
-            $p1_name = $p1_user->display_name;
-            $p2_name = $p2_user->display_name;
+            $p1_name = $this->foos_name($p1_user);
+            $p2_name = $this->foos_name($p2_user);
             $waiting = false;
             if ($p1_id == $curr_user_id && get_post_meta($match_id, 'p1_accept', true)) $waiting = true;
             if ($p2_id == $curr_user_id && get_post_meta($match_id, 'p2_accept', true)) $waiting = true;
