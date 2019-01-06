@@ -94,7 +94,7 @@ class Wp_Foosnines_Shortcodes {
                     <td>Wins</td>
                     <td>Losses</td>
                     <td>W/L Ratio</td>
-                    <td>Elo Rating</td>
+                    <td><a href='https://en.wikipedia.org/wiki/Elo_rating_system'>Rating</a></td>
                   </tr>";
 
         $rank_counter = 1;
@@ -807,7 +807,7 @@ class Wp_Foosnines_Shortcodes {
             'posts_per_page'    => -1,
             'fields'    => 'ids',
             'order'     => $order,
-            'orderby'   => 'modified',
+            'orderby'   => 'date',
             'meta_query' => array(
                 array(
                     'key' => 'is_final',
@@ -908,7 +908,7 @@ class Wp_Foosnines_Shortcodes {
             update_user_meta($winner_id, 'foos_lws', $curr_ws);
         }
         
-        // update elo rating
+        // update elo rating (pre-condition: match is final)
         $this->update_elo_from_match($match_id);
     }
     
@@ -992,12 +992,11 @@ class Wp_Foosnines_Shortcodes {
         return $foos_name;
     }
     
-    private function update_elo_from_history () {
+    private function update_all_elo() {
         $BASE_ELO = 1000;
         $all_players = get_users();
         
         foreach ($all_players as $player) { // reset all elos to base elo
-            //var_dump($player->ID . ': ' . $player->last_name . '<br>');
             update_user_meta($player->ID, 'foos_elo', $BASE_ELO);
         }
         $final_match_ids = $this->get_all_final_singles('ASC');
@@ -1005,15 +1004,15 @@ class Wp_Foosnines_Shortcodes {
             $this->update_elo_from_match($match_id);
         }
     }
-
+    
     private function update_elo_from_match($match_id) {
         if (!get_post_meta($match_id, 'is_final', true)) return;
-        $K_MULT = 30;   // elo rating multiplier
         // get user ratings
         $p1_id = get_post_meta($match_id, 'p1_id', true);
         $p2_id = get_post_meta($match_id, 'p2_id', true);
         $p1_rating = get_user_meta($p1_id, 'foos_elo', true);
         $p2_rating = get_user_meta($p2_id, 'foos_elo', true);
+        
         if (get_post_meta($match_id, 'p1_score', true) == 5) {  // p1 won
             $p1_actual = 1;
             $p2_actual = 0;
@@ -1025,11 +1024,17 @@ class Wp_Foosnines_Shortcodes {
         // calc user ratings
         $p1_prob = 1 / (1 + pow(10, ($p1_rating - $p2_rating) / 400));
         $p2_prob = 1 / (1 + pow(10, ($p2_rating - $p1_rating) / 400));
-        $p1_new_rating = round($p1_rating + $K_MULT * ($p1_actual - $p1_prob), 0);
-        $p2_new_rating = round($p2_rating + $K_MULT * ($p2_actual - $p2_prob), 0);
+        $p1_new_rating = round($p1_rating + $this->k_factor($p1_rating) * ($p1_actual - $p1_prob), 0);
+        $p2_new_rating = round($p2_rating + $this->k_factor($p2_rating) * ($p2_actual - $p2_prob), 0);
         
         update_user_meta($p1_id, 'foos_elo', $p1_new_rating);
         update_user_meta($p2_id, 'foos_elo', $p2_new_rating);
+    }
+        
+    private function k_factor($rating) {
+        if ($rating < 2100) return 32;
+        if ($rating >= 2100 && $rating <= 2400) return 24;
+        if ($rating > 2400) return 16;
     }
     
  }
