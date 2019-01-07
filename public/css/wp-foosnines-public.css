@@ -17,3 +17,14 @@
     cursor: pointer;
     background-color: lightgray;
 }
+
+div.foos-match-row {
+    margin-bottom:20px;
+    background-color: #EEEEEE;
+    padding: 15px 10px 10px 10px;
+    border-radius: 10px;
+}
+
+input.foos-score-box {
+    border-radius: 5px;
+}

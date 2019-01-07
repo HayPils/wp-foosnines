@@ -443,17 +443,18 @@ class Wp_Foosnines_Shortcodes {
             $p1_name = $p1_user->display_name;
             $p2_name = $p2_user->display_name;
             ?>
-    <div class="row justify-content-md-center" style="margin-bottom:20px;">
-        <div class="col-sm-3">
+    <div class="row justify-content-md-center foos-match-row">
+        <div class="col-sm-5">
             <div class="row">
                 <div class="col-"><?php echo get_avatar($p1_id, 70) ?></div>
                 <div class="col"><h3><?php echo $p1_name ?></h3></div>
             </div>
         </div>
-        <div class="col-sm-3" style="text-align:center;">
-            <h3><?php echo get_post_meta($match_id, 'p1_score', true) ?> - <?php echo get_post_meta($match_id, 'p2_score', true) ?></h3>
+        <div class="col-" style="text-align:center;">
+            <?php echo $this->foos_score_display($match_id) ?>
+            <p><?php echo $this->foos_date(intval(get_post_meta($match_id, 'final_date', true))) ?></p>
         </div>
-        <div class="col-sm-3" style="text-align:right;">
+        <div class="col-sm-5" style="text-align:right;">
             <div class="row">
                 <div class="col"><h3><?php echo $p2_name ?></h3></div>
                 <div class="col-"><?php echo get_avatar($p2_id, 70) ?></div>
@@ -507,21 +508,35 @@ class Wp_Foosnines_Shortcodes {
             $p2_user = get_userdata($p2_id);
             $p1_name = $this->foos_name($p1_user);
             $p2_name = $this->foos_name($p2_user);
+            $p1_chance = round($this->winning_chance(get_user_meta($p1_id, 'foos_elo', true), get_user_meta($p2_id, 'foos_elo', true)), 2) * 100;
+            $p2_chance = 100 - $p1_chance;
             $waiting = false;
             if ($p1_id == $curr_user_id && get_post_meta($match_id, 'p1_accept', true)) $waiting = true;
             if ($p2_id == $curr_user_id && get_post_meta($match_id, 'p2_accept', true)) $waiting = true;
             ?>
-    <div class="row justify-content-md-center" style="margin-bottom: 50px;">
-        <div class="col-sm-3">
+    <div class="row justify-content-md-center foos-match-row">
+        <div class="col-sm-5">
             <div class="row">
-                <div class="col-"><?php echo get_avatar($p1_id, 70) ?></div>
-                <div class="col"><h3><?php echo $p1_name ?></h3></div>
+                <div class="col-"><?php echo get_avatar($p1_id, 80) ?></div>
+                <div class="col">
+                    <div class="row">
+                        <div class="col"><h3><?php echo $p1_name ?></h3></div>
+                    </div>
+                    <div class="row">
+                        <div class="col"><?php echo get_user_meta($p1_id, 'foos_elo', true) ?></div>
+                    </div>
+                    <div class="row">
+                        <div class="col">Chance: <?php echo $p1_chance ?>%</div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-xs-3 foos-score-box-form" style="text-align:center;">
+        <div class="col-sm-2 foos-score-box-form" style="text-align:center;">
             <form method="post">
                 <input type="hidden" name="match_id" value="<?php echo $match_id ?>">
-                <h3><input type="text" name="p1_score" value="<?php echo $p1_score ?>" autocomplete="off">-<input type="text" name="p2_score" value="<?php echo $p2_score ?>" autocomplete="off"></h3>
+                <h3><input type="text" name="p1_score" value="<?php echo $p1_score ?>" class="foos-score-box" autocomplete="off">
+                    -
+                    <input type="text" name="p2_score" value="<?php echo $p2_score ?>" class="foos-score-box" autocomplete="off"></h3>
                 <?php if (!$waiting && ($p1_score == 5 xor $p2_score == 5)): ?>
                     <button type="submit" class="btn btn-success">Accept</button>
                 <?php else: ?>
@@ -536,10 +551,20 @@ class Wp_Foosnines_Shortcodes {
                 <?php endif; ?>
             </form>
         </div>
-        <div class="col-sm-3" style="text-align:right;">
+        <div class="col-sm-5" style="text-align:right;">
             <div class="row">
-                <div class="col"><h3><?php echo $p2_name ?></h3></div>
-                <div class="col-"><?php echo get_avatar($p2_id, 70) ?></div>
+                <div class="col">
+                    <div class="row">
+                        <div class="col"><h3><?php echo $p2_name ?></h3></div>
+                    </div>
+                    <div class="row">
+                        <div class="col"><?php echo get_user_meta($p2_id, 'foos_elo', true) ?></div>
+                    </div>
+                    <div class="row">
+                        <div class="col">Chance: <?php echo $p2_chance ?>%</div>
+                    </div>
+                </div>
+                <div class="col-"><?php echo get_avatar($p2_id, 80) ?></div>
             </div>
         </div>
     </div>
@@ -564,22 +589,24 @@ class Wp_Foosnines_Shortcodes {
             $p2_name = $p2_user->display_name;
             $p1_score = get_post_meta($match_id, 'p1_score', true);
             $p2_score = get_post_meta($match_id, 'p2_score', true);
+            $final_date = $this->foos_date(intval(get_post_meta($match_id, 'final_date', true)));
             ?>
-    <div class="row justify-content-md-center" style="margin-bottom: 20px;">
-        <div class="col-sm-3">
+    <div class="row justify-content-md-center foos-match-row">
+        <div class="col-sm-4">
             <div class="row">
-                <div class="col-"><?php echo get_avatar($p1_id, 70) ?></div>
+                <div class="col-"><?php echo get_avatar($p1_id, 80) ?></div>
                 <div class="col"><h3><?php echo $p1_name ?></h3></div>
             </div>
         </div>
         <div class="col-sm-3" style="text-align:center;">
             <?php if (($p1_id == get_current_user_id() && $p1_score == 5) || ($p2_id == get_current_user_id() && $p2_score == 5)) : ?>
-            <h3>W</h3> <?php else: ?> <h3>L</h3><?php endif; ?><h3><?php echo $p1_score ?> - <?php echo $p2_score ?></h3>
+            <h4>W</h4> <?php else: ?> <h4>L</h4><?php endif; echo $this->foos_score_display($match_id) ?>
+            <?php echo $final_date ?>
         </div>
-        <div class="col-sm-3" style="text-align:right;">
+        <div class="col-sm-4" style="text-align:right;">
             <div class="row">
                 <div class="col"><h3><?php echo $p2_name ?></h3></div>
-                <div class="col-"><?php echo get_avatar($p2_id, 70) ?></div>
+                <div class="col-"><?php echo get_avatar($p2_id, 80) ?></div>
             </div>
         </div>
     </div>
@@ -1025,19 +1052,44 @@ class Wp_Foosnines_Shortcodes {
         }
         
         // calc user ratings
-        $p1_prob = 1 / (1 + pow(10, ($p1_rating - $p2_rating) / 400));
-        $p2_prob = 1 / (1 + pow(10, ($p2_rating - $p1_rating) / 400));
+        $p1_prob = $this->winning_chance($p1_rating, $p2_rating);
+        $p2_prob = 1 - $p1_prob;
         $p1_new_rating = round($p1_rating + $this->k_factor($p1_rating) * ($p1_actual - $p1_prob), 0);
         $p2_new_rating = round($p2_rating + $this->k_factor($p2_rating) * ($p2_actual - $p2_prob), 0);
         
         update_user_meta($p1_id, 'foos_elo', $p1_new_rating);
         update_user_meta($p2_id, 'foos_elo', $p2_new_rating);
     }
+    
+    private function winning_chance($my_rating, $opp_rating) {
+        return 1 / (1 + pow(10, ($opp_rating - $my_rating) / 400));
+    }
         
     private function k_factor($rating) {
         if ($rating < 2100) return 32;
         if ($rating >= 2100 && $rating <= 2400) return 24;
         if ($rating > 2400) return 16;
+    }
+    
+    private function foos_date($unix_time) {
+        $now_week = intval(current_time('W'));
+        $arg_week = intval(date('W', $unix_time));
+        if ($now_week == $arg_week) return date('D, M d g:ia', $unix_time);
+        return date('M d', $unix_time);
+    }
+    
+    private function foos_score_display($match_id, $tag='h3') {
+        $p1_score = get_post_meta($match_id, 'p1_score', true);
+        $p2_score = get_post_meta($match_id, 'p2_score', true);
+        $score_display = '<'.$tag.'>';
+        if ($p1_score == 5) {
+            $score_display .= '<span style="color: #FF7800;">'.$p1_score.'</span>';
+            $score_display .= ' - '.$p2_score;
+        } else if ($p2_score == 5) {
+            $score_display .= $p1_score;
+            $score_display .= ' - <span style="color: #FF7800;">'.$p2_score.'</span>';
+        }
+        return $score_display . '</'.$tag.'>';
     }
     
  }
