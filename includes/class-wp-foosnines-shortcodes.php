@@ -158,49 +158,63 @@ class Wp_Foosnines_Shortcodes {
 <div class="contianer-flex">
     <!-- Record win streak -->
     <div class="row">
-        <div class="col-sm-4">
-            <h2>Record Win Streak ⚡ </h2>
+        <div class="col" style="text-align:center;">
+            <div class="row">
+                <div class="col">
+                    <h2>Record Win Streak ⚡ </h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <h3 style="margin-top:3px;">
+                    <?php
+                        for ($i = 0; $i < count($top_lws); $i++) {
+                            echo $top_lws[$i]->display_name;
+                            echo ($i < count($top_lws) - 1) ? ', ' : ' ';
+                        }
+                    ?>
+                    </h3>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <h3 style="margin-top:3px;"><?php echo ''.$max_lws.' wins'; ?></h3>
+                </div>
+            </div>
         </div>
-        <div class="col">
-            <h3 style="margin-top:3px;">
-            <?php
-                for ($i = 0; $i < count($top_lws); $i++) {
-                    echo $top_lws[$i]->display_name;
-                    echo ($i < count($top_lws) - 1) ? ', ' : ' ';
-                }
-            ?>
-            </h3>
-        </div>
-        <div class="col-sm-2">
-            <h3 style="margin-top:3px;"><?php echo ''.$max_lws.' wins'; ?></h3>
+
+        <!-- Longest win streak (On fire >= 3 wins) -->
+        <div class="col" style="text-align:center;">
+            <div class="row">        
+                <div class="col justify-content-md-center">
+                    <h2>On Fire 🔥</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <h3 style="margin-top:3px;">
+                    <?php
+                        if ($max_streak > 2) {
+                             for ($i = 0; $i < count($top_streakers); $i++) {
+                                 echo $top_streakers[$i]->display_name;
+                                 echo ($i < count($top_streakers) - 1) ? ', ' : ' ';
+                             }
+                        } else {
+                            echo 'No one is on fire 🥶';
+                        }
+                    ?>
+                    </h3>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <?php if ($max_streak > 2) : ?>
+                    <div id="on_fire_gauge" data-fire-cnt="<?php echo $max_streak ?>" data-lws="<?php echo $max_lws ?>" data-p-lws="<?php echo $penult_lws ?>"></div>
+                    <?php endif; ?>
+                </div>
+            </div> 
         </div>
     </div>
-    
-    <!-- Longest win streak (On fire >= 3 wins) -->
-    <div class="row align-items-center">        
-        <div class="col-sm-4">
-            <h2>On Fire 🔥</h2>
-        </div>
-        <div class="col">
-            <h3 style="margin-top:3px;">
-            <?php
-                if ($max_streak > 2) {
-                     for ($i = 0; $i < count($top_streakers); $i++) {
-                         echo $top_streakers[$i]->display_name;
-                         echo ($i < count($top_streakers) - 1) ? ', ' : ' ';
-                     }
-                } else {
-                    echo 'No one is on fire 🥶';
-                }
-            ?>
-            </h3>
-        </div>
-        <div class="col-sm-2">
-            <?php if ($max_streak > 2) : ?>
-            <div id="on_fire_gauge" data-fire-cnt="<?php echo $max_streak ?>" data-lws="<?php echo $max_lws ?>" data-p-lws="<?php echo $penult_lws ?>"></div>
-            <?php endif; ?>
-        </div>
-    </div> 
 </div>
         <?php
         return ob_get_clean();
@@ -417,19 +431,7 @@ class Wp_Foosnines_Shortcodes {
     
     public function match_board() {
         // get all singles matches
-        $singles_ids = new WP_Query([
-            'post_type' => 'singles_match',
-            'posts_per_page'    => -1,
-            'meta_query'    => [
-                [
-                    'key'   => 'is_final',
-                    'value' => '1',
-                    'compare' => '='
-                ]
-            ],
-            'fields'    => 'ids'
-        ]);
-        $singles_ids = $singles_ids->posts;
+        $singles_ids = $this->get_all_final_singles();
         ob_start(); ?>
 <div class="container-flex" style="margin-bottom:50px;">
     <div class="row justify-content-md-center">
@@ -450,20 +452,20 @@ class Wp_Foosnines_Shortcodes {
             $p2_name = $p2_user->display_name;
             ?>
     <div class="row justify-content-md-center foos-match-row">
-        <div class="col-sm-5">
+        <div class="col-sm-4">
             <div class="row">
-                <div class="col-"><?php echo get_avatar($p1_id, 70) ?></div>
+                <div class="col-"><?php echo get_avatar($p1_id, 80) ?></div>
                 <div class="col"><h3><?php echo $p1_name ?></h3></div>
             </div>
         </div>
-        <div class="col-" style="text-align:center;">
+        <div class="col-sm-2" style="text-align:center;">
             <?php echo $this->foos_score_display($match_id) ?>
             <p><?php echo $this->foos_date(intval(get_post_meta($match_id, 'final_date', true))) ?></p>
         </div>
-        <div class="col-sm-5" style="text-align:right;">
+        <div class="col-sm-4" style="text-align:right;">
             <div class="row">
                 <div class="col"><h3><?php echo $p2_name ?></h3></div>
-                <div class="col-"><?php echo get_avatar($p2_id, 70) ?></div>
+                <div class="col-"><?php echo get_avatar($p2_id, 80) ?></div>
             </div>
         </div>
     </div>
@@ -905,7 +907,7 @@ class Wp_Foosnines_Shortcodes {
         
         if ($p1_accept && $p2_accept && ($p1_score == 5 xor $p2_score == 5)) {  // finalize match
             update_post_meta($match_id, 'is_final', true);
-            update_post_meta($match_id, 'final_date', date('U'));
+            update_post_meta($match_id, 'final_date', current_time('timestamp'));
             $this->update_player_data($p1_id, $p2_id, $p1_score, $p2_score, $match_id);
             return true;
         }
@@ -1078,11 +1080,10 @@ class Wp_Foosnines_Shortcodes {
     }
     
     private function foos_date($unix_time) {
-        return '';
         $now_week = intval(current_time('W'));
         $arg_week = intval(date('W', $unix_time));
-        if ($now_week == $arg_week) return date('D, M d g:ia', $unix_time);
-        return date('M d', $unix_time);
+        if ($now_week == $arg_week) return date('D, g:ia', $unix_time);
+        return date('M j', $unix_time);
     }
     
     private function foos_score_display($match_id, $tag='h3') {

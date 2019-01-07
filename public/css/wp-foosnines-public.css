@@ -28,3 +28,7 @@ div.foos-match-row {
 input.foos-score-box {
     border-radius: 5px;
 }
+
+#on_fire_gauge table {
+    display: inline;
+}
