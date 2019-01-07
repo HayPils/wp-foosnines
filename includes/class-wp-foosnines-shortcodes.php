@@ -121,17 +121,19 @@ class Wp_Foosnines_Shortcodes {
     }
     
     public function top_stat_board() {
+        wp_enqueue_script( 'foos-top-stat-board', plugin_dir_url( __DIR__ ).'public/js/top-stat-board.js', array('jquery', 'google-charts'), $this->version, true);   // enqueue js
         ob_start();
         $all_players = get_users( 'blog_id='.$curr_blog_id.'&orderby=nicename' );
         $max_streak = 0;
         $max_lws = 0;
+        $penult_lws = 0;
         $top_steakers = [];
         $top_lws = [];
         
         foreach ($all_players as $player) {
             $player_streak = get_user_meta($player->ID, 'foos_ws', true);   // get player win streak
             $player_lws = get_user_meta($player->ID, 'foos_lws', true);   // get player longest win streak
-
+            
             // process longest win streak data
             if ($player_lws > $max_lws) {
                 $top_lws = [$player];
@@ -139,6 +141,8 @@ class Wp_Foosnines_Shortcodes {
             } else if ($player_lws == $max_lws) {
                 array_push($top_lws, $player);
             }
+            
+            if ($max_lws > $player_lws && $penult_lws < $player_lws) $penult_lws = $player_lws;
 
             // process on fire data
             if ($player_streak > $max_streak) {
@@ -173,7 +177,7 @@ class Wp_Foosnines_Shortcodes {
     </div>
     
     <!-- Longest win streak (On fire >= 3 wins) -->
-    <div class="row">        
+    <div class="row align-items-center">        
         <div class="col-sm-4">
             <h2>On Fire 🔥</h2>
         </div>
@@ -192,7 +196,9 @@ class Wp_Foosnines_Shortcodes {
             </h3>
         </div>
         <div class="col-sm-2">
-            <h3 style="margin-top:3px;"><?php echo ($max_streak > 2) ? ''.$max_streak.' wins' : ''; ?></h3>
+            <?php if ($max_streak > 2) : ?>
+            <div id="on_fire_gauge" data-fire-cnt="<?php echo $max_streak ?>" data-lws="<?php echo $max_lws ?>" data-p-lws="<?php echo $penult_lws ?>"></div>
+            <?php endif; ?>
         </div>
     </div> 
 </div>
@@ -1072,6 +1078,7 @@ class Wp_Foosnines_Shortcodes {
     }
     
     private function foos_date($unix_time) {
+        return '';
         $now_week = intval(current_time('W'));
         $arg_week = intval(date('W', $unix_time));
         if ($now_week == $arg_week) return date('D, M d g:ia', $unix_time);

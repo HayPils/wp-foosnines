@@ -97,8 +97,9 @@ class Wp_Foosnines_Public {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/wp-foosnines-public.js', array( 'jquery' ), $this->version, false );
+		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/wp-foosnines-public.js', array( 'jquery', 'google-charts' ), $this->version, true );
                 wp_enqueue_script( 'bootstrap_js', "https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js", array('jquery'), $this->version, true);
+                wp_enqueue_script( 'google-charts', "https://www.gstatic.com/charts/loader.js", array(), '', true);
 
 	}
 
