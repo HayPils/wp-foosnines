@@ -767,7 +767,8 @@ class Wp_Foosnines_Shortcodes {
             'posts_per_page'    => -1,
             'fields'    => 'ids',
             'order'     => $order,
-            'orderby'   => 'modified',
+            'meta_key'  => 'final_date',
+            'orderby'   => 'meta_value_num',
             'meta_query' => array(
                 'relation' => 'OR',
                 array(
@@ -807,7 +808,8 @@ class Wp_Foosnines_Shortcodes {
             'posts_per_page'    => -1,
             'fields'    => 'ids',
             'order'     => $order,
-            'orderby'   => 'date',
+            'meta_key'  => 'final_date',
+            'orderby'   => 'meta_value_num',
             'meta_query' => array(
                 array(
                     'key' => 'is_final',
@@ -870,6 +872,7 @@ class Wp_Foosnines_Shortcodes {
         
         if ($p1_accept && $p2_accept && ($p1_score == 5 xor $p2_score == 5)) {  // finalize match
             update_post_meta($match_id, 'is_final', true);
+            update_post_meta($match_id, 'final_date', date('U'));
             $this->update_player_data($p1_id, $p2_id, $p1_score, $p2_score, $match_id);
             return true;
         }
