@@ -84,40 +84,49 @@ class Wp_Foosnines_Shortcodes {
             }
         }
 
-        $toRet = "<table>";    // HTML string generated for shortcode
-
-        // header row
-        $toRet .= "<tr>
-                    <td>Rank</td>
-                    <td></td>
-                    <td></td>
-                    <td>Wins</td>
-                    <td>Losses</td>
-                    <td>W/L Ratio</td>
-                    <td><a href='https://en.wikipedia.org/wiki/Elo_rating_system'>Rating</a></td>
-                  </tr>";
-
-        $rank_counter = 1;
-        // fill table with all players
-        for ($i = 0; $i < $num_of_players; $i++ ) {
-            $player = $all_players[$i];
-            $player_wins = intval(get_user_meta($player->ID, 'foos_wins', TRUE));
-            $player_losses = intval(get_user_meta($player->ID, 'foos_losses', TRUE));
-            $wl_ratio = round(($player_losses == 0) ? $player_wins : (float)$player_wins / (float)$player_losses, 2);
-            if ($player_wins + $player_losses != 0) {
-                $toRet .= "<tr>
-                        <td>" . $rank_counter . "</td>
-                        <td style='padding-top:12px;'>" . get_avatar($player->ID, 60) . "</td>
-                        <td>" . $this->foos_name($player) . "</td>
-                        <td>" . $player_wins . "</td>
-                        <td>" . $player_losses . "</td>
-                        <td>" . $wl_ratio . "</td>
-                        <td>" . $this->rating($player->ID) . "</td>
-                       </tr>";
-                $rank_counter++;
-            }
-        }
-        return $toRet .= "</table>";
+        ob_start();
+        ?>
+<div class="table-responsive">
+    <table class="table">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Rank</th>
+                <th scope="col"></th>
+                <th scope="col"></th>
+                <th scope="col">Wins</th>
+                <th scope="col">Losses</th>
+                <th scope="col">W/L Ratio</th>
+                <th scope="col"><a href='https://en.wikipedia.org/wiki/Elo_rating_system'>Rating</a></th>
+            </tr>
+        <thead>
+        <tbody>
+    <?php
+    $rank_counter = 1;
+    // fill table with all players
+    for ($i = 0; $i < $num_of_players; $i++ ) {
+        $player = $all_players[$i];
+        $player_wins = intval(get_user_meta($player->ID, 'foos_wins', TRUE));
+        $player_losses = intval(get_user_meta($player->ID, 'foos_losses', TRUE));
+        $wl_ratio = round(($player_losses == 0) ? $player_wins : (float)$player_wins / (float)$player_losses, 2);
+        if ($player_wins + $player_losses != 0) : ?>
+            <tr>
+                <td scope="row" class="align-middle"><?php echo $rank_counter ?></td>
+                <td style="padding-top:12px;" class="align-middle"><?php echo get_avatar($player->ID, 60) ?></td>
+                <td class="align-middle"><?php echo $this->foos_name($player) ?></td>
+                <td class="align-middle"><?php echo $player_wins ?></td>
+                <td class="align-middle"><?php echo $player_losses ?></td>
+                <td class="align-middle"><?php echo $wl_ratio ?></td>
+                <td class="align-middle"><?php echo $this->rating($player->ID) ?></td>
+            </tr>
+            <?php 
+            $rank_counter++;
+        endif;
+    }
+    ?>
+        </tbody>
+    </table>
+</div>
+        <?php return ob_get_clean();
     }
     
     public function top_stat_board() {
