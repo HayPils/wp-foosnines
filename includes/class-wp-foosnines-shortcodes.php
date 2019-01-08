@@ -110,7 +110,7 @@ class Wp_Foosnines_Shortcodes {
         $wl_ratio = round(($player_losses == 0) ? $player_wins : (float)$player_wins / (float)$player_losses, 2);
         if ($player_wins + $player_losses != 0) : ?>
             <tr>
-                <td scope="row" class="align-middle"><?php echo $rank_counter ?></td>
+                <th scope="row" class="align-middle"><?php echo $rank_counter ?></td>
                 <td style="padding-top:12px;" class="align-middle"><?php echo get_avatar($player->ID, 60) ?></td>
                 <td class="align-middle"><?php echo $this->foos_name($player) ?></td>
                 <td class="align-middle"><?php echo $player_wins ?></td>
@@ -473,6 +473,7 @@ class Wp_Foosnines_Shortcodes {
     
     public function my_matches() {
         $match_master = new Match_Master();
+        $elo_master = new Elo_Master();
         // attempt to create new match if player ids in request vars
         if (isset($_POST['p1id']) && isset($_POST['p2id'])) {
             $p1_id = intval($_POST['p1id']);
