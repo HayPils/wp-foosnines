@@ -29,6 +29,6 @@
 	 * practising this, we should strive to set a better example in our own work.
 	 */
         
-        google.charts.load('current', {packages: ['corechart', 'gauge']});
+        google.charts.load('current', {packages: ['corechart', 'gauge', 'line']});
 
 })( jQuery );

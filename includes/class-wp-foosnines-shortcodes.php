@@ -412,26 +412,12 @@ class Wp_Foosnines_Shortcodes {
         <?php
         return ob_get_clean();
     }
-
-
-    public function foos_player_info($atts) {
-        $toRet = "";
-        // Display current user's stats when player attribute is set to self
-        if (isset($atts['player']) && strcmp($atts['player'], 'self') == 0) {
-            $this_user = wp_get_current_user();
-            $toRet .= '<h1><b>' . $this_user->display_name . '</b></h1>';
-        } else {
-            if (!isset($_GET['player'])) {
-                $opponent_name = filter_input(INPUT_GET, "player", FILTER_SANITIZE_STRING);
-            }
-            $toRet .= '<h1><b>' . $toRet . '</b></h1>';
-        }
-        return $toRet;
-    }
     
     public function match_board() {
         // get all singles matches
-        $singles_ids = $this->get_all_final_singles();
+        $match_master = new Match_Master();
+        $singles_ids = $match_master->get_all_final_singles();
+        $elo_master = new Elo_Master();
         ob_start(); ?>
 <div class="container-flex" style="margin-bottom:50px;">
     <div class="row justify-content-md-center">
@@ -477,11 +463,12 @@ class Wp_Foosnines_Shortcodes {
     }
     
     public function my_matches() {
+        $match_master = new Match_Master();
         // attempt to create new match if player ids in request vars
         if (isset($_POST['p1id']) && isset($_POST['p2id'])) {
             $p1_id = intval($_POST['p1id']);
             $p2_id = intval($_POST['p2id']);
-            $this->create_singles_match($p1_id, $p2_id);
+            $match_master->create_singles_match($p1_id, $p2_id);
         }
         
         // attempt to submit a match score
@@ -516,7 +503,7 @@ class Wp_Foosnines_Shortcodes {
             $p2_user = get_userdata($p2_id);
             $p1_name = $this->foos_name($p1_user);
             $p2_name = $this->foos_name($p2_user);
-            $p1_chance = round($this->winning_chance(get_user_meta($p1_id, 'foos_elo', true), get_user_meta($p2_id, 'foos_elo', true)), 2) * 100;
+            $p1_chance = round($elo_master->winning_chance(get_user_meta($p1_id, 'foos_elo', true), get_user_meta($p2_id, 'foos_elo', true)), 2) * 100;
             $p2_chance = 100 - $p1_chance;
             $waiting = false;
             if ($p1_id == $curr_user_id && get_post_meta($match_id, 'p1_accept', true)) $waiting = true;
@@ -651,91 +638,70 @@ class Wp_Foosnines_Shortcodes {
         return ob_get_clean();
     }
     
-    
-    /**
-     * Redirection function hooked into template_redirect. Checks for matchid parameter and finds existing match of
-     * the player id parameters or creates new match with given player id parameters
-     */
-    public function create_singles_match($p1_id, $p2_id) {      
-        $curr_user_id = get_current_user_id();
-        // check if player ids exist
-        // prevent other users from creating matches for other players
-        // and from creating matches with themselves
-        if (!$this->user_id_exists($p1_id) || !$this->user_id_exists($p2_id)
-            || ($curr_user_id != $p1_id && $curr_user_id != $p2_id)
-            || ($curr_user_id == $p1_id && $curr_user_id == $p2_id)) {
-            return;
-        }
-        // check if match already exists
-        $args = array(
-            'post_type' => 'singles_match',
-            'meta_query' => array(
-                'relation' => 'OR',
-                array(
-                    'relation' => 'AND',
-                    array(
-                        'key' => 'p1_id',
-                        'value' => $p1_id,
-                        'compare' => '=',
-                    ),
-                    array(
-                        'key' => 'p2_id',
-                        'value' => $p2_id,
-                        'compare' => '='
-                    ),
-                    array(
-                        'key' => 'is_final',
-                        'value' => 0,
-                        'compare' => '='
-                    )
-                ),
-                array(
-                    'relation' => 'AND',
-                    array(
-                        'key' => 'p1_id',
-                        'value' => $p2_id,
-                        'compare' => '=',
-                    ),
-                    array(
-                        'key' => 'p2_id',
-                        'value' => $p1_id,
-                        'compare' => '='
-                    ),
-                    array(
-                        'key' => 'is_final',
-                        'value' => 0,
-                        'compare' => '='
-                    )
-                )
-            )
-        );
-        $wp_query = new WP_Query($args);
-        $existing_match_ids = $wp_query->get_posts();
-
-        if (count($existing_match_ids) > 0) return;  // do not create new match if one already exists
-
-        $p1_user = get_userdata($p1_id);
-        $p2_user = get_userdata($p2_id);
-        $p1_name = $p1_user->first_name . ' ' . $p1_user->last_name;
-        $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
-        
-        // create match post
-        wp_insert_post(array(
-            'post_type' => 'singles_match',
-            'post_title' => $p1_name . ' vs. ' . $p2_name,
-            'post_status' => 'publish',
-            'meta_input' => array(
-                'p1_id' => $p1_id,
-                'p2_id' => $p2_id,
-                'p1_score'  => 0,
-                'p2_score'  => 0,
-                'is_final' => 0,
-                'p1_accept' => 0,
-                'p2_accept' => 0
-            )
-        ));
+    // player info page shortcode
+    public function player_info() {
+        wp_enqueue_script( 'foos-player-info', plugin_dir_url( __DIR__ ).'public/js/player-info.js', array('jquery', 'google-charts'), $this->version, true);   // enqueue js
+        wp_localize_script('foos-player-info', 'ajax_object', array('ajaxurl' => admin_url('admin-ajax.php')));
+        $player = get_userdata(intval($_REQUEST['player_id']));
+        $wins = get_user_meta($player->ID, 'foos_wins', true);
+        $wins = ($wins) ? $wins : 0;
+        $losses = get_user_meta($player->ID, 'foos_losses', true);
+        $losses = ($losses) ? $losses : 0;
+        $wl_ratio = ($losses > 0) ? round($wins / $losses, 2) : 0;
+        $ws = get_user_meta($player->ID, 'foos_ws', true);
+        $ws = ($ws) ? $ws : 0;
+        $lws = get_user_meta($player->ID, 'foos_lws', true);
+        $lws = ($lws) ? $lws : 0;
+        ob_start();
+        ?>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <?php echo get_avatar($player->ID, 150); ?>
+            <h1><?php echo $this->foos_name($player) ?></h1>
+            <h3><?php echo $player->first_name . ' ' . $player->last_name ?></h3>
+            <h3>Rating: <?php echo get_user_meta($player->ID, 'foos_elo', true) ?></h3>
+        </div>
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">Wins</th>
+                                    <th scope="col">Losses</th>
+                                    <th scope="col">W/L Ratio</th>
+                                    <th scope="col">G</th>
+                                    <th scope="col">GA</th>
+                                    <th scope="col">W Strk</th>
+                                    <th scope="col">Longest W Strk</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><?php echo $wins ?></td>
+                                    <td><?php echo $losses ?></td>
+                                    <td><?php echo $wl_ratio ?></td>
+                                    <td><?php echo $this->get_career_goals($player->ID) ?></td>
+                                    <td><?php echo $this->get_career_goals_allowed($player->ID) ?></td>
+                                    <td><?php echo $ws ?></td>
+                                    <td><?php echo $lws ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col">
+                    <div id="elo_history_graph"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        <?php
+        return ob_get_clean();
     }
-    
     
     /**
      * Returns rank of a player based on W/L ratio multiplied by
@@ -837,25 +803,6 @@ class Wp_Foosnines_Shortcodes {
         return $singles_ids->posts;
     }
     
-    private function get_all_final_singles($order='DESC') {
-        $singles_ids = new WP_Query([
-            'post_type' => 'singles_match',
-            'posts_per_page'    => -1,
-            'fields'    => 'ids',
-            'order'     => $order,
-            'meta_key'  => 'final_date',
-            'orderby'   => 'meta_value_num',
-            'meta_query' => array(
-                array(
-                    'key' => 'is_final',
-                    'value' => 1,
-                    'compare' => '='
-                )
-            )
-        ]);
-        return $singles_ids->posts;
-    }
-    
     private function user_id_exists($user_id){
         global $wpdb;
 
@@ -946,8 +893,9 @@ class Wp_Foosnines_Shortcodes {
             update_user_meta($winner_id, 'foos_lws', $curr_ws);
         }
         
+        $elo_master = new Elo_Master();
         // update elo rating (pre-condition: match is final)
-        $this->update_elo_from_match($match_id);
+        $elo_master->update_elo_from_match($match_id);
     }
     
     private function get_avatar_url($get_avatar){
@@ -1030,55 +978,6 @@ class Wp_Foosnines_Shortcodes {
         return $foos_name;
     }
     
-    private function update_all_elo() {
-        $BASE_ELO = 1000;
-        $all_players = get_users();
-        
-        foreach ($all_players as $player) { // reset all elos to base elo
-            update_user_meta($player->ID, 'foos_elo', $BASE_ELO);
-        }
-        $final_match_ids = $this->get_all_final_singles('ASC');
-        foreach ($final_match_ids as $match_id ) {
-            $this->update_elo_from_match($match_id);
-        }
-    }
-    
-    private function update_elo_from_match($match_id) {
-        if (!get_post_meta($match_id, 'is_final', true)) return;
-        // get user ratings
-        $p1_id = get_post_meta($match_id, 'p1_id', true);
-        $p2_id = get_post_meta($match_id, 'p2_id', true);
-        $p1_rating = get_user_meta($p1_id, 'foos_elo', true);
-        $p2_rating = get_user_meta($p2_id, 'foos_elo', true);
-        
-        if (get_post_meta($match_id, 'p1_score', true) == 5) {  // p1 won
-            $p1_actual = 1;
-            $p2_actual = 0;
-        } else {    // p2 won
-            $p1_actual = 0;
-            $p2_actual = 1;
-        }
-        
-        // calc user ratings
-        $p1_prob = $this->winning_chance($p1_rating, $p2_rating);
-        $p2_prob = 1 - $p1_prob;
-        $p1_new_rating = round($p1_rating + $this->k_factor($p1_rating) * ($p1_actual - $p1_prob), 0);
-        $p2_new_rating = round($p2_rating + $this->k_factor($p2_rating) * ($p2_actual - $p2_prob), 0);
-        
-        update_user_meta($p1_id, 'foos_elo', $p1_new_rating);
-        update_user_meta($p2_id, 'foos_elo', $p2_new_rating);
-    }
-    
-    private function winning_chance($my_rating, $opp_rating) {
-        return 1 / (1 + pow(10, ($opp_rating - $my_rating) / 400));
-    }
-        
-    private function k_factor($rating) {
-        if ($rating < 2100) return 32;
-        if ($rating >= 2100 && $rating <= 2400) return 24;
-        if ($rating > 2400) return 16;
-    }
-    
     private function foos_date($unix_time) {
         $now_week = intval(current_time('W'));
         $arg_week = intval(date('W', $unix_time));
@@ -1098,6 +997,36 @@ class Wp_Foosnines_Shortcodes {
             $score_display .= ' - <span style="color: #FF7800;">'.$p2_score.'</span>';
         }
         return $score_display . '</'.$tag.'>';
+    }
+    
+    private function get_career_goals($user_id) {
+        $singles_ids = $this->get_user_final_singles($user_id);
+        $goal_sum = 0;
+        foreach ($singles_ids as $match_id) {
+            $p1_id = get_post_meta($match_id, 'p1_id', true);
+            $p2_id = get_post_meta($match_id, 'p2_id', true);
+            if ($user_id == $p1_id) {
+                $goal_sum += get_post_meta($match_id, 'p1_score', true);
+            } else {
+                $goal_sum += get_post_meta($match_id, 'p2_score', true);
+            }
+        }
+        return $goal_sum;
+    }
+    
+    private function get_career_goals_allowed($user_id) {
+        $singles_ids = $this->get_user_final_singles($user_id);
+        $ga_sum = 0;
+        foreach ($singles_ids as $match_id) {
+            $p1_id = get_post_meta($match_id, 'p1_id', true);
+            $p2_id = get_post_meta($match_id, 'p2_id', true);
+            if ($user_id == $p1_id) {
+                $ga_sum += get_post_meta($match_id, 'p2_score', true);
+            } else {
+                $ga_sum += get_post_meta($match_id, 'p1_score', true);
+            }
+        }
+        return $ga_sum;
     }
     
  }
