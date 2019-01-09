@@ -428,7 +428,7 @@ class Wp_Foosnines_Shortcodes {
         $match_master = new Match_Master();
         $singles_ids = $match_master->get_all_final_singles();
         $elo_master = new Elo_Master();
-        $elo_master->update_all_elo();
+
         ob_start(); ?>
 <div class="container-flex" style="margin-bottom:50px;">
     <div class="row justify-content-md-center">
