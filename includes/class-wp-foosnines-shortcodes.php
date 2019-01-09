@@ -97,7 +97,7 @@ class Wp_Foosnines_Shortcodes {
                 <th scope="col">Wins</th>
                 <th scope="col">Losses</th>
                 <th scope="col">W/L Ratio</th>
-                <th scope="col"><a href='https://en.wikipedia.org/wiki/Elo_rating_system'>Rating</a></th>
+                <th scope="col"><a href='https://en.wikipedia.org/wiki/Elo_rating_system'>Score</a></th>
             </tr>
         <thead>
         <tbody>
@@ -428,6 +428,7 @@ class Wp_Foosnines_Shortcodes {
         $match_master = new Match_Master();
         $singles_ids = $match_master->get_all_final_singles();
         $elo_master = new Elo_Master();
+        $elo_master->update_all_elo();
         ob_start(); ?>
 <div class="container-flex" style="margin-bottom:50px;">
     <div class="row justify-content-md-center">
@@ -671,7 +672,7 @@ class Wp_Foosnines_Shortcodes {
             <?php echo get_avatar($player->ID, 150); ?>
             <h1><?php echo $this->foos_name($player) ?></h1>
             <h3><?php echo $player->first_name . ' ' . $player->last_name ?></h3>
-            <h3>Rating: <?php echo get_user_meta($player->ID, 'foos_elo', true) ?></h3>
+            <h3>Score: <?php echo get_user_meta($player->ID, 'foos_elo', true) ?></h3>
         </div>
         <div class="col">
             <div class="row">

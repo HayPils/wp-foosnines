@@ -9,7 +9,7 @@
         var data = new google.visualization.DataTable();
 
         data.addColumn('number', 'Game');
-        data.addColumn('number', 'Rating');
+        data.addColumn('number', 'Score');
 
         $.ajax({
             url: ajax_object.ajaxurl,
@@ -26,9 +26,7 @@
                 }
                 
                 var options = {
-                    chart: {
-                      title: 'Rating History',
-                    },
+                    chart: {},
                     width: 600,
                     height: 400
                 };

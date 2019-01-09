@@ -8,7 +8,7 @@
 class Elo_Master {
     public function __construct() {}
     
-    private function update_all_elo() {
+    public function update_all_elo() {
         $match_master = new Match_Master();
         $BASE_ELO = 1000;
         $all_players = get_users();
@@ -33,16 +33,24 @@ class Elo_Master {
         if (get_post_meta($match_id, 'p1_score', true) == 5) {  // p1 won
             $p1_actual = 1;
             $p2_actual = 0;
+            
+            // BONUS POINTS
+            $p1_new_rating = 10;
+            $p2_new_rating = 0;
         } else {    // p2 won
             $p1_actual = 0;
             $p2_actual = 1;
+            
+            // BONUS POINTS
+            $p1_new_rating = 0;
+            $p2_new_rating = 10;
         }
         
         // calc user ratings
         $p1_prob = $this->winning_chance($p1_rating, $p2_rating);
         $p2_prob = 1 - $p1_prob;
-        $p1_new_rating = round($p1_rating + $this->k_factor($p1_rating) * ($p1_actual - $p1_prob), 0);
-        $p2_new_rating = round($p2_rating + $this->k_factor($p2_rating) * ($p2_actual - $p2_prob), 0);
+        $p1_new_rating += round($p1_rating + $this->k_factor($p1_rating) * ($p1_actual - $p1_prob), 0);
+        $p2_new_rating += round($p2_rating + $this->k_factor($p2_rating) * ($p2_actual - $p2_prob), 0);
         
         update_user_meta($p1_id, 'foos_elo', $p1_new_rating);
         update_user_meta($p2_id, 'foos_elo', $p2_new_rating);
@@ -82,16 +90,20 @@ class Elo_Master {
             if (get_post_meta($match_id, 'p1_score', true) == 5) {  // p1 won
                 $p1_actual = 1;
                 $p2_actual = 0;
+                $p1_new_rating = 10;
+                $p2_new_rating = 0;
             } else {    // p2 won
                 $p1_actual = 0;
                 $p2_actual = 1;
+                $p1_new_rating = 0;
+                $p2_new_rating = 10;
             }
 
             // calc user ratings
             $p1_prob = $this->winning_chance($p1_rating, $p2_rating);
             $p2_prob = 1 - $p1_prob;
-            $p1_new_rating = round($p1_rating + $this->k_factor($p1_rating) * ($p1_actual - $p1_prob), 0);
-            $p2_new_rating = round($p2_rating + $this->k_factor($p2_rating) * ($p2_actual - $p2_prob), 0);
+            $p1_new_rating += round($p1_rating + $this->k_factor($p1_rating) * ($p1_actual - $p1_prob), 0);
+            $p2_new_rating += round($p2_rating + $this->k_factor($p2_rating) * ($p2_actual - $p2_prob), 0);
 
             $player_elo[$p1_id] = $p1_new_rating;
             $player_elo[$p2_id] = $p2_new_rating;
