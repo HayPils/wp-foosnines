@@ -815,21 +815,14 @@ class Wp_Foosnines_Shortcodes {
         return $singles_ids->posts;
     }
     
-    private function user_id_exists($user_id){
-        global $wpdb;
-
-        $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->users WHERE ID = %d", $user_id));
-
-        if($count == 1){ return TRUE; }else{ return FALSE; }
-    }
-    
     private function submit_score($match_id, $p1_score, $p2_score) {
         if (get_post_meta($match_id, 'is_final', true)) return;    // cannot submit score of final match
+        $match_master = new Match_Master();
         $curr_user_id = get_current_user_id();
         $p1_id = get_post_meta($match_id, 'p1_id', true);
         $p2_id = get_post_meta($match_id, 'p2_id', true);
 
-        if (!$this->user_id_exists($p1_id) || !$this->user_id_exists($p2_id)
+        if (!$match_master->user_id_exists($p1_id) || !$match_master->user_id_exists($p2_id)
             || ($curr_user_id != $p1_id && $curr_user_id != $p2_id)
             || ($curr_user_id == $p1_id && $curr_user_id == $p2_id)) {
             return false;
