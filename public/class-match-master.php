@@ -107,7 +107,7 @@ class Match_Master {
         return $singles_ids->posts;
     }
     
-    private function user_id_exists($user_id){
+    public function user_id_exists($user_id){
         global $wpdb;
 
         $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->users WHERE ID = %d", $user_id));
