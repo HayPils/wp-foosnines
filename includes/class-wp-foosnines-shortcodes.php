@@ -64,6 +64,7 @@ class Wp_Foosnines_Shortcodes {
      * @since 1.0.0
      */
     public function foos_gen_leader_board( $atts ) {
+        wp_enqueue_script( 'foos-leaderboard', plugin_dir_url( __DIR__ ).'public/js/leaderboard.js', array('jquery'), $this->version, true);   // enqueue js
         $curr_blog_id = get_current_blog_id();
         // players to display in rows on leader board in ranked order
         $all_players = get_users( 'blog_id='.$curr_blog_id.'&orderby=nicename' );
@@ -87,7 +88,7 @@ class Wp_Foosnines_Shortcodes {
         ob_start();
         ?>
 <div class="table-responsive">
-    <table class="table">
+    <table class="table table-hover">
         <thead class="thead-dark">
             <tr>
                 <th scope="col">Rank</th>
@@ -109,7 +110,7 @@ class Wp_Foosnines_Shortcodes {
         $player_losses = intval(get_user_meta($player->ID, 'foos_losses', TRUE));
         $wl_ratio = round(($player_losses == 0) ? $player_wins : (float)$player_wins / (float)$player_losses, 2);
         if ($player_wins + $player_losses != 0) : ?>
-            <tr>
+            <tr class="foos-leaderboard-row" data-player-id="<?php echo $player->ID ?>">
                 <th scope="row" class="align-middle"><?php echo $rank_counter ?></td>
                 <td style="padding-top:12px;" class="align-middle"><?php echo get_avatar($player->ID, 60) ?></td>
                 <td class="align-middle"><?php echo $this->foos_name($player) ?></td>
