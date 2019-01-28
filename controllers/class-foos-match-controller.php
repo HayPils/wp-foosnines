@@ -115,4 +115,54 @@ class Match_Master {
         if($count == 1){ return TRUE; }else{ return FALSE; }
     }
     
+    private function submit_score($match_id, $p1_score, $p2_score) {
+        if (get_post_meta($match_id, 'is_final', true)) return;    // cannot submit score of final match
+        $match_master = new Match_Master();
+        $curr_user_id = get_current_user_id();
+        $p1_id = get_post_meta($match_id, 'p1_id', true);
+        $p2_id = get_post_meta($match_id, 'p2_id', true);
+
+        if (!$match_master->user_id_exists($p1_id) || !$match_master->user_id_exists($p2_id)
+            || ($curr_user_id != $p1_id && $curr_user_id != $p2_id)
+            || ($curr_user_id == $p1_id && $curr_user_id == $p2_id)) {
+            return false;
+        }
+
+        // set current player
+        if ($curr_user_id == $p1_id) {
+            $curr_player = 'p1';
+            $opp_player = 'p2';
+        } else {
+            $curr_player = 'p2';
+            $opp_player = 'p1';
+        }
+       
+        $prev_p1_score = get_post_meta($match_id, 'p1_score', true);
+        $prev_p2_score = get_post_meta($match_id, 'p2_score', true);
+
+        if (($prev_p1_score != $p1_score || $prev_p2_score != $p2_score)) { // change score
+            if  (($p1_score == 5 && $p2_score == 5) || $p1_score < 0 || $p1_score > 5 || $p2_score < 0 || $p2_score > 5) {  // invalid score
+                return false;
+            }
+            update_post_meta($match_id, 'p1_score', $p1_score);
+            update_post_meta($match_id, 'p2_score', $p2_score);
+            update_post_meta($match_id, $curr_player.'_accept', 1);
+            update_post_meta($match_id, $opp_player.'_accept', 0);
+            return true;
+        }
+        
+        // current user accepts score
+        update_post_meta($match_id, $curr_player.'_accept', 1);
+
+        $p1_accept = get_post_meta($match_id, 'p1_accept', true);
+        $p2_accept = get_post_meta($match_id, 'p2_accept', true);
+        
+        if ($p1_accept && $p2_accept && ($p1_score == 5 xor $p2_score == 5)) {  // finalize match
+            update_post_meta($match_id, 'is_final', true);
+            update_post_meta($match_id, 'final_date', current_time('timestamp'));
+            $this->update_player_data($p1_id, $p2_id, $p1_score, $p2_score, $match_id);
+            return true;
+        }
+    }
+    
 }

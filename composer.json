@@ -1,0 +1,19 @@
+{
+    "name": "5nines/wp-foosnines",
+    "description": "a plugin for the 5NINES foosball website",
+    "type": "project",
+    "license": "GNU General Public License v2.0",
+    "authors": [
+        {
+            "name": "Hayden Pilsner",
+            "email": "hpilsner@5nines.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "classmap": [
+            "public/components/",
+            "controllers/"
+        ]
+    }
+}
