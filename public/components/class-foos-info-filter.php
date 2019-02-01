@@ -14,7 +14,7 @@
  * @author Hayden Pilsner
  */
 class Foos_Info_Filter {
-    private static function foos_name($user) {
+    public static function foos_name($user) {
         $foos_name = $user->display_name;
         
         $player_controller = new Foos_Player_Controller();
@@ -71,14 +71,14 @@ class Foos_Info_Filter {
         return $foos_name;
     }
     
-    private static function foos_date($unix_time) {
+    public static function foos_date($unix_time) {
         $now_week = intval(current_time('W'));
         $arg_week = intval(date('W', $unix_time));
         if ($now_week == $arg_week) return date('D, g:ia', $unix_time);
         return date('M j', $unix_time);
     }
     
-    private static function foos_score_display($match_id, $tag='h3') {
+    public static function foos_score_display($match_id, $tag='h3') {
         $p1_score = get_post_meta($match_id, 'p1_score', true);
         $p2_score = get_post_meta($match_id, 'p2_score', true);
         $score_display = '<'.$tag.'>';

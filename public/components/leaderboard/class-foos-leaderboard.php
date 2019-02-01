@@ -8,7 +8,7 @@
 class Foos_Leaderboard {
     
     public function enqueue_js() {
-        wp_enqueue_script( 'foos-leaderboard', plugin_dir_url( __DIR__ ).'leaderboard.js', array('jquery'), $this->version, true);   // enqueue js
+        wp_enqueue_script( 'foos-leaderboard', plugin_dir_url( __DIR__ ).'leaderboard/leaderboard.js', array('jquery'), $this->version, true);   // enqueue js
     }
 
     public function print_leaderboard($max) {

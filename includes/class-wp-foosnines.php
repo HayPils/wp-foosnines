@@ -129,15 +129,7 @@ class Wp_Foosnines {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-wp-foosnines-public.php';
                 
-                /**
-		 * The class responsible for controlling singles and doubles matches
-		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-match-master.php';
-                
-                /**
-		 * The class responsible for controlling Elo rankings of players
-		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-elo-master.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'vendor/autoload.php';
 
 		$this->loader = new Wp_Foosnines_Loader();
 

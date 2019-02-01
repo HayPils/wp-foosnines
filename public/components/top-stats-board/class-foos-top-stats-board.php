@@ -19,7 +19,7 @@ class Foos_Top_Stats_Board {
     }
     
     public function enqueue_script() {
-        wp_enqueue_script( 'foos-top-stat-board', plugin_dir_url( __DIR__ ).'public/js/top-stat-board.js', array('jquery', 'google-charts'), $this->version, true);   // enqueue js
+        wp_enqueue_script( 'foos-top-stat-board', plugin_dir_url( __DIR__ ).'top-stats-board/top-stats-board.js', array('jquery', 'google-charts'), $this->version, true);   // enqueue js
     }
     
     private function get_top_lws() {
@@ -41,7 +41,6 @@ class Foos_Top_Stats_Board {
             
             if ($this->max_lws > $player_lws && $this->penult_lws < $player_lws) $this->penult_lws = $player_lws;
             
-            return $this->top_lws;
         }
     }
     
@@ -61,7 +60,6 @@ class Foos_Top_Stats_Board {
                 array_push($this->top_streakers, $player);
             }
         }
-        return $this->top_streakers;
     }
     
     public function print_board() {
