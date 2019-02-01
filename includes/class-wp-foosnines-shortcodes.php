@@ -66,8 +66,8 @@ class Wp_Foosnines_Shortcodes {
     public function top_stat_board() {
         $top_stat_board = new Foos_Top_Stats_Board();
         ob_start();
-        $top_stat_board->enqueue_script();
         $top_stat_board->print_board();
+        $top_stat_board->enqueue_js();
         return ob_get_clean();
     }
     

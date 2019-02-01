@@ -40,8 +40,8 @@ class Foos_Match_Board {
             </div>
         </div>
         <div class="col-sm-2" style="text-align:center;">
-            <?php echo $this->foos_score_display($match_id) ?>
-            <p><?php echo $this->foos_date(intval(get_post_meta($match_id, 'final_date', true))) ?></p>
+            <?php echo Foos_Info_Filter::foos_score_display($match_id) ?>
+            <p><?php echo Foos_Info_Filter::foos_date(intval(get_post_meta($match_id, 'final_date', true))) ?></p>
         </div>
         <div class="col-sm-4" style="text-align:right;">
             <div class="row">

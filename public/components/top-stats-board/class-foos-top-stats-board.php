@@ -18,7 +18,7 @@ class Foos_Top_Stats_Board {
         $this->get_top_streakers();
     }
     
-    public function enqueue_script() {
+    public function enqueue_js() {
         wp_enqueue_script( 'foos-top-stat-board', plugin_dir_url( __DIR__ ).'top-stats-board/top-stats-board.js', array('jquery', 'google-charts'), $this->version, true);   // enqueue js
     }
     
