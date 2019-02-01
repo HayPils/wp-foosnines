@@ -6,24 +6,6 @@
  * @author Hayden Pilsner
  */
 class Foos_Player_Controller {
-    /**
-     * Returns rank of a player based on W/L ratio multiplied by
-     * number of played games
-     *
-     * @param $user   player to rank
-     * @return bool|float|int   FALSE if player stats are not integers, else
-     *                          returns player rank as float or int
-     */
-    public function rating( $user_id ) {
-        $BASE_ELO = 1000;
-        $user_elo = get_user_meta($user_id, 'foos_elo', true);
-        if (!$user_elo) {
-            update_user_meta($user_id, 'foos_elo', $BASE_ELO);
-        }
-        $wins = get_user_meta($user_id, 'foos_wins', true);
-        $losses = get_user_meta($user_id, 'foos_losses', true);
-        return ($wins + $losses > 0) ? $user_elo : 0;
-    }
     
     public function get_user_inp_singles($user_id, $order='DESC') {
         $singles_ids = new WP_Query([
@@ -172,5 +154,49 @@ class Foos_Player_Controller {
         $elo_master = new Elo_Master();
         // update elo rating (pre-condition: match is final)
         $elo_master->update_elo_from_match($match_id);
+    }
+    
+    public function get_players_by($order) {
+        $curr_blog_id = get_current_blog_id();
+        // players to display in rows on leader board in ranked order
+        $all_players = get_users( 'blog_id='.$curr_blog_id.'&orderby=nicename' );
+
+        switch ($order) :
+            case 'score':
+                for ($i = 1; $i < count($all_players); $i++) {
+                $index_shadow = $i;
+                $prev = $this->rating($all_players[$index_shadow - 1]->ID);
+                $curr = $this->rating($all_players[$index_shadow]->ID);
+                while ( $index_shadow > 0 && $prev < $curr ) {
+                    $temp = $all_players[$index_shadow - 1]; // update previous player
+                    $all_players[$index_shadow - 1] = $all_players[$index_shadow]; // swap lower ranked player back
+                    $all_players[$index_shadow] = $temp;    // swap higher ranked player ahead
+                    $index_shadow--;
+                }
+            }
+            break;
+            // add more cases for different order values
+        endswitch;
+
+        return $all_players;
+    }
+    
+    /**
+     * Returns rank of a player based on W/L ratio multiplied by
+     * number of played games
+     *
+     * @param $user   player to rank
+     * @return bool|float|int   FALSE if player stats are not integers, else
+     *                          returns player rank as float or int
+     */
+    public function rating( $user_id ) {
+        $BASE_ELO = 1000;
+        $user_elo = get_user_meta($user_id, 'foos_elo', true);
+        if (!$user_elo) {
+            update_user_meta($user_id, 'foos_elo', $BASE_ELO);
+        }
+        $wins = get_user_meta($user_id, 'foos_wins', true);
+        $losses = get_user_meta($user_id, 'foos_losses', true);
+        return ($wins + $losses > 0) ? $user_elo : 0;
     }
 }

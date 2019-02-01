@@ -55,11 +55,19 @@ class Wp_Foosnines_Shortcodes {
     }
         
     public function leaderboard( $atts ) {
-        
+        $leaderboard = new Foos_Leaderboard();
+        $num_of_players = isset($atts['top']) ? intval($atts['top']) : -1;
+        ob_start();
+        $leaderboard->print_leaderboard($num_of_players);
+        $leaderboard->enqueue_js();
+        return ob_get_clean();
     }
     
     public function top_stat_board() {
-        
+        $top_stat_board = new Foos_Top_Stats_Board();
+        ob_start();
+        $top_stat_board->print_board();
+        return ob_get_clean();
     }
     
     public function match_board() {

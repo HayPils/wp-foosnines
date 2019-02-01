@@ -17,25 +17,8 @@ class Foos_Info_Filter {
     private static function foos_name($user) {
         $foos_name = $user->display_name;
         
-        $curr_blog_id = get_current_blog_id();
-        // players to display in rows on leader board in ranked order
-        $all_players = get_users( 'blog_id='.$curr_blog_id.'&orderby=nicename' );
-        if (isset($atts['top'])) {
-            $num_of_players = intval($atts['top']);
-        } else {
-            $num_of_players = count($all_players);
-        }
-
-        // insertion sort all players in ranked order
-        for ($i = 1; $i < count($all_players); $i++) {
-            $index_shadow = $i;
-            while ( $index_shadow > 0 && $this->rating($all_players[$index_shadow - 1]->ID) < $this->rating($all_players[$index_shadow]->ID) ) {
-                $temp = $all_players[$index_shadow - 1]; // update previous player
-                $all_players[$index_shadow - 1] = $all_players[$index_shadow]; // swap lower ranked player back
-                $all_players[$index_shadow] = $temp;    // swap higher ranked player ahead
-                $index_shadow--;
-            }
-        }
+        $player_controller = new Foos_Player_Controller();
+        $all_players = $player_controller->get_players_by('score');
         
         // add medals
         if ($user->ID == $all_players[0]->ID) {   // add gold medal
@@ -47,7 +30,6 @@ class Foos_Info_Filter {
         if ($user->ID == $all_players[2]->ID) {   // add bronze medal
             $foos_name .= ' 🥉';
         }
-        
         
         // add fire
         $max_streak = 0;

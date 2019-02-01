@@ -5,29 +5,15 @@
  *
  * @author Hayden Pilsner
  */
-class class-foos-leaderboard {
-    wp_enqueue_script( 'foos-leaderboard', plugin_dir_url( __DIR__ ).'public/js/leaderboard.js', array('jquery'), $this->version, true);   // enqueue js
-        $curr_blog_id = get_current_blog_id();
-        // players to display in rows on leader board in ranked order
-        $all_players = get_users( 'blog_id='.$curr_blog_id.'&orderby=nicename' );
-        if (isset($atts['top'])) {
-            $num_of_players = intval($atts['top']);
-        } else {
-            $num_of_players = count($all_players);
-        }
+class Foos_Leaderboard {
+    
+    public function enqueue_js() {
+        wp_enqueue_script( 'foos-leaderboard', plugin_dir_url( __DIR__ ).'leaderboard.js', array('jquery'), $this->version, true);   // enqueue js
+    }
 
-        // insertion sort all players in ranked order
-        for ($i = 1; $i < count($all_players); $i++) {
-            $index_shadow = $i;
-            while ( $index_shadow > 0 && $this->rating($all_players[$index_shadow - 1]->ID) < $this->rating($all_players[$index_shadow]->ID) ) {
-                $temp = $all_players[$index_shadow - 1]; // update previous player
-                $all_players[$index_shadow - 1] = $all_players[$index_shadow]; // swap lower ranked player back
-                $all_players[$index_shadow] = $temp;    // swap higher ranked player ahead
-                $index_shadow--;
-            }
-        }
-
-        ob_start();
+    public function print_leaderboard($max) {
+        $player_controller = new Foos_Player_Controller();
+        $all_players = $player_controller->get_players_by('score');
         ?>
 <div class="table-responsive">
     <table class="table table-hover">
@@ -44,30 +30,34 @@ class class-foos-leaderboard {
         <thead>
         <tbody>
     <?php
-    $rank_counter = 1;
     // fill table with all players
-    for ($i = 0; $i < $num_of_players; $i++ ) {
-        $player = $all_players[$i];
-        $player_wins = intval(get_user_meta($player->ID, 'foos_wins', TRUE));
-        $player_losses = intval(get_user_meta($player->ID, 'foos_losses', TRUE));
-        $wl_ratio = round(($player_losses == 0) ? $player_wins : (float)$player_wins / (float)$player_losses, 2);
-        if ($player_wins + $player_losses != 0) : ?>
-            <tr class="foos-leaderboard-row" data-player-id="<?php echo $player->ID ?>">
-                <th scope="row" class="align-middle"><?php echo $rank_counter ?></td>
-                <td style="padding-top:12px;" class="align-middle"><?php echo get_avatar($player->ID, 60) ?></td>
-                <td class="align-middle"><?php echo $this->foos_name($player) ?></td>
-                <td class="align-middle"><?php echo $player_wins ?></td>
-                <td class="align-middle"><?php echo $player_losses ?></td>
-                <td class="align-middle"><?php echo $wl_ratio ?></td>
-                <td class="align-middle"><?php echo $this->rating($player->ID) ?></td>
-            </tr>
-            <?php 
-            $rank_counter++;
-        endif;
+    $max = ($max == -1) ? count($all_players) : $max;
+    for ($i = 0; $i < $max; $i++ ) {
+        $this->print_player($all_players[$i], $i + 1);
     }
     ?>
         </tbody>
     </table>
 </div>
-        <?php return ob_get_clean();
+        <?php
+    }
+    
+    private function print_player($player, $rank) {
+        $player_wins = intval(get_user_meta($player->ID, 'foos_wins', TRUE));
+        $player_losses = intval(get_user_meta($player->ID, 'foos_losses', TRUE));
+        $player_elo = get_user_meta($player->ID, 'foos_elo', TRUE);
+        $wl_ratio = round(($player_losses == 0) ? $player_wins : (float)$player_wins / (float)$player_losses, 2);
+        if ($player_wins + $player_losses != 0) : ?>
+            <tr class="foos-leaderboard-row" data-player-id="<?php echo $player->ID ?>">
+                <th scope="row" class="align-middle"><?php echo $rank ?></td>
+                <td style="padding-top:12px;" class="align-middle"><?php echo get_avatar($player->ID, 60) ?></td>
+                <td class="align-middle"><?php echo Foos_Info_Filter::foos_name($player) ?></td>
+                <td class="align-middle"><?php echo $player_wins ?></td>
+                <td class="align-middle"><?php echo $player_losses ?></td>
+                <td class="align-middle"><?php echo $wl_ratio ?></td>
+                <td class="align-middle"><?php echo $player_elo ?></td>
+            </tr>
+            <?php 
+        endif;
+    }
 }

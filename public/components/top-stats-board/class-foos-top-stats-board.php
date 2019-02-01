@@ -1,51 +1,70 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-
 /**
  * Description of class-foos-top-stats-board
  *
- * @author haydenpilsner
+ * @author Hayden Pilsner
  */
-class class-foos-top-stats-board {
-wp_enqueue_script( 'foos-top-stat-board', plugin_dir_url( __DIR__ ).'public/js/top-stat-board.js', array('jquery', 'google-charts'), $this->version, true);   // enqueue js
-        ob_start();
-        $all_players = get_users( 'blog_id='.$curr_blog_id.'&orderby=nicename' );
-        $max_streak = 0;
-        $max_lws = 0;
-        $penult_lws = 0;
-        $top_steakers = [];
-        $top_lws = [];
+class Foos_Top_Stats_Board {
+    
+    private $max_streak = 0;
+    private $max_lws = 0;
+    private $penult_lws = null;
+    private $top_lws = [];
+    private $top_streakers = [];
+    
+    public function __construct() {
+        $this->get_top_lws();
+        $this->get_top_streakers();
+    }
+    
+    public function enqueue_script() {
+        wp_enqueue_script( 'foos-top-stat-board', plugin_dir_url( __DIR__ ).'public/js/top-stat-board.js', array('jquery', 'google-charts'), $this->version, true);   // enqueue js
+    }
+    
+    private function get_top_lws() {
+        $all_players = get_users( 'blog_id='.get_current_blog_id().'&orderby=nicename' );
+        $this->max_lws = 0;
+        $this->penult_lws = 0;
+        $this->top_lws = [];
         
         foreach ($all_players as $player) {
-            $player_streak = get_user_meta($player->ID, 'foos_ws', true);   // get player win streak
             $player_lws = get_user_meta($player->ID, 'foos_lws', true);   // get player longest win streak
             
             // process longest win streak data
-            if ($player_lws > $max_lws) {
-                $top_lws = [$player];
-                $max_lws = $player_lws;
-            } else if ($player_lws == $max_lws) {
-                array_push($top_lws, $player);
+            if ($player_lws > $this->max_lws) {
+                $this->top_lws = [$player];
+                $this->max_lws = $player_lws;
+            } else if ($player_lws == $this->max_lws) {
+                array_push($this->top_lws, $player);
             }
             
-            if ($max_lws > $player_lws && $penult_lws < $player_lws) $penult_lws = $player_lws;
+            if ($this->max_lws > $player_lws && $this->penult_lws < $player_lws) $this->penult_lws = $player_lws;
+            
+            return $this->top_lws;
+        }
+    }
+    
+    private function get_top_streakers() {
+        $all_players = get_users( 'blog_id='.get_current_blog_id().'&orderby=nicename' );
+        $this->max_streak = 0;
+        $this->top_streakers = [];
+        
+        foreach ($all_players as $player) {
+            $player_streak = get_user_meta($player->ID, 'foos_ws', true);   // get player win streak
 
             // process on fire data
-            if ($player_streak > $max_streak) {
-                $top_streakers = [$player];
-                $max_streak = $player_streak;
-            } else if ($player_streak == $max_streak){
-                array_push($top_streakers, $player);
+            if ($player_streak > $this->max_streak) {
+                $this->top_streakers = [$player];
+                $this->max_streak = $player_streak;
+            } else if ($player_streak == $this->max_streak){
+                array_push($this->top_streakers, $player);
             }
-            
         }
-        
+        return $this->top_streakers;
+    }
+    
+    public function print_board() {
         ?>
 <div class="contianer-flex">
     <!-- Record win streak -->
@@ -60,9 +79,9 @@ wp_enqueue_script( 'foos-top-stat-board', plugin_dir_url( __DIR__ ).'public/js/t
                 <div class="col">
                     <h3 style="margin-top:3px;">
                     <?php
-                        for ($i = 0; $i < count($top_lws); $i++) {
-                            echo $top_lws[$i]->display_name;
-                            echo ($i < count($top_lws) - 1) ? ', ' : ' ';
+                        for ($i = 0; $i < count($this->top_lws); $i++) {
+                            echo $this->top_lws[$i]->display_name;
+                            echo ($i < count($this->top_lws) - 1) ? ', ' : ' ';
                         }
                     ?>
                     </h3>
@@ -70,7 +89,7 @@ wp_enqueue_script( 'foos-top-stat-board', plugin_dir_url( __DIR__ ).'public/js/t
             </div>
             <div class="row">
                 <div class="col">
-                    <h3 style="margin-top:3px;"><?php echo ''.$max_lws.' wins'; ?></h3>
+                    <h3 style="margin-top:3px;"><?php echo ''.$this->max_lws.' wins'; ?></h3>
                 </div>
             </div>
         </div>
@@ -86,10 +105,10 @@ wp_enqueue_script( 'foos-top-stat-board', plugin_dir_url( __DIR__ ).'public/js/t
                 <div class="col">
                     <h3 style="margin-top:3px;">
                     <?php
-                        if ($max_streak > 2) {
-                             for ($i = 0; $i < count($top_streakers); $i++) {
-                                 echo $top_streakers[$i]->display_name;
-                                 echo ($i < count($top_streakers) - 1) ? ', ' : ' ';
+                        if ($this->max_streak > 2) {
+                             for ($i = 0; $i < count($this->top_streakers); $i++) {
+                                 echo $this->top_streakers[$i]->display_name;
+                                 echo ($i < count($this->top_streakers) - 1) ? ', ' : ' ';
                              }
                         } else {
                             echo 'No one is on fire 🥶';
@@ -100,14 +119,14 @@ wp_enqueue_script( 'foos-top-stat-board', plugin_dir_url( __DIR__ ).'public/js/t
             </div>
             <div class="row">
                 <div class="col">
-                    <?php if ($max_streak > 2) : ?>
-                    <div id="on_fire_gauge" data-fire-cnt="<?php echo $max_streak ?>" data-lws="<?php echo $max_lws ?>" data-p-lws="<?php echo $penult_lws ?>"></div>
+                    <?php if ($this->max_streak > 2) : ?>
+                    <div id="on_fire_gauge" data-fire-cnt="<?php echo $this->max_streak ?>" data-lws="<?php echo $this->max_lws ?>" data-p-lws="<?php echo $this->penult_lws ?>"></div>
                     <?php endif; ?>
                 </div>
             </div> 
         </div>
     </div>
 </div>
-        <?php
-        return ob_get_clean();
+        <?php  
+    }
 }
