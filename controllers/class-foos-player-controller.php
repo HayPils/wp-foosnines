@@ -165,9 +165,7 @@ class Foos_Player_Controller {
             case 'score':
                 for ($i = 1; $i < count($all_players); $i++) {
                 $index_shadow = $i;
-                $prev = $this->rating($all_players[$index_shadow - 1]->ID);
-                $curr = $this->rating($all_players[$index_shadow]->ID);
-                while ( $index_shadow > 0 && $prev < $curr ) {
+                while ( $index_shadow > 0 && $this->rating($all_players[$index_shadow - 1]->ID) < $this->rating($all_players[$index_shadow]->ID) ) {
                     $temp = $all_players[$index_shadow - 1]; // update previous player
                     $all_players[$index_shadow - 1] = $all_players[$index_shadow]; // swap lower ranked player back
                     $all_players[$index_shadow] = $temp;    // swap higher ranked player ahead
