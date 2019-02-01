@@ -7,12 +7,13 @@
  */
 class Foos_Player_Info {
     
-    public function enqueue_scripts() {
-        wp_enqueue_script( 'foos-player-info', plugin_dir_url( __DIR__ ).'public/js/player-info.js', array('jquery', 'google-charts'), $this->version, true);   // enqueue js
+    public function enqueue_js() {
+        wp_enqueue_script( 'foos-player-info', plugin_dir_url( __DIR__ ).'player-info/player-info.js', array('jquery', 'google-charts'), $this->version, true);   // enqueue js
         wp_localize_script('foos-player-info', 'ajax_object', array('ajaxurl' => admin_url('admin-ajax.php')));
     }
     
     public function stats_portfolio($player_id) {
+        $player_cont = new Foos_Player_Controller();
         $player = get_userdata($player_id);
         $wins = get_user_meta($player->ID, 'foos_wins', true);
         $wins = ($wins) ? $wins : 0;
@@ -28,7 +29,7 @@ class Foos_Player_Info {
     <div class="row">
         <div class="col">
             <?php echo get_avatar($player->ID, 150); ?>
-            <h1><?php echo $this->foos_name($player) ?></h1>
+            <h1><?php echo Foos_Info_Filter::foos_name($player) ?></h1>
             <h3><?php echo $player->first_name . ' ' . $player->last_name ?></h3>
             <h3>Score: <?php echo get_user_meta($player->ID, 'foos_elo', true) ?></h3>
         </div>
@@ -53,8 +54,8 @@ class Foos_Player_Info {
                                     <td><?php echo $wins ?></td>
                                     <td><?php echo $losses ?></td>
                                     <td><?php echo $wl_ratio ?></td>
-                                    <td><?php echo $this->get_career_goals($player->ID) ?></td>
-                                    <td><?php echo $this->get_career_goals_allowed($player->ID) ?></td>
+                                    <td><?php echo $player_cont->get_career_goals($player->ID) ?></td>
+                                    <td><?php echo $player_cont->get_career_goals_allowed($player->ID) ?></td>
                                     <td><?php echo $ws ?></td>
                                     <td><?php echo $lws ?></td>
                                 </tr>

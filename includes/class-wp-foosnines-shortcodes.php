@@ -81,7 +81,6 @@ class Wp_Foosnines_Shortcodes {
     public function my_matches() {
         $my_matches = new Foos_My_Matches();
         $match_master = new Match_Master();
-        $elo_master = new Elo_Master();
         
         // attempt to create new match if player ids in request vars
         if (isset($_POST['p1id']) && isset($_POST['p2id'])) {
@@ -112,6 +111,7 @@ class Wp_Foosnines_Shortcodes {
         $player_info = new Foos_Player_Info();
         ob_start();
         $player_info->stats_portfolio(intval($_REQUEST['player_id']));
+        $player_info->enqueue_js();
         return ob_get_clean();
     }
     
