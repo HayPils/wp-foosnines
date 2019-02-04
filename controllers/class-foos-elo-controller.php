@@ -5,18 +5,18 @@
  *
  * @author Hayden Pilsner
  */
-class Elo_Master {
+class Foos_Elo_Controller {
     public function __construct() {}
     
     public function update_all_elo() {
-        $match_master = new Match_Master();
+        $match_cont = new Foos_Match_Controller();
         $BASE_ELO = 1000;
         $all_players = get_users();
         
         foreach ($all_players as $player) { // reset all elos to base elo
             update_user_meta($player->ID, 'foos_elo', $BASE_ELO);
         }
-        $final_match_ids = $match_master->get_all_final_singles('ASC');
+        $final_match_ids = $match_cont->get_all_final_singles('ASC');
         foreach ($final_match_ids as $match_id ) {
             $this->update_elo_from_match($match_id);
         }
@@ -67,7 +67,7 @@ class Elo_Master {
     }
     
     public function get_elo_history($player_id) {
-        $match_master = new Match_Master();
+        $match_cont = new Foos_Match_Controller();
         
         $BASE_ELO = 1000;
         $all_players = get_users();
@@ -78,7 +78,7 @@ class Elo_Master {
             $player_elo[$player->ID] = $BASE_ELO;
         }
         
-        $final_singles_ids = $match_master->get_all_final_singles('ASC');
+        $final_singles_ids = $match_cont->get_all_final_singles('ASC');
         foreach ($final_singles_ids as $match_id) {
             if (!get_post_meta($match_id, 'is_final', true)) return;
             // get user ratings

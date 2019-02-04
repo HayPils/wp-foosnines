@@ -129,15 +129,7 @@ class Wp_Foosnines {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-wp-foosnines-public.php';
                 
-                /**
-		 * The class responsible for controlling singles and doubles matches
-		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-match-master.php';
-                
-                /**
-		 * The class responsible for controlling Elo rankings of players
-		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-elo-master.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'vendor/autoload.php';
 
 		$this->loader = new Wp_Foosnines_Loader();
 
@@ -209,10 +201,8 @@ class Wp_Foosnines {
             
                 $plugin_shortcodes = new Wp_Foosnines_Shortcodes( $this->get_plugin_name(), $this->get_version() );
                         
-                $this->loader->add_shortcode( 'foos_leaderboard', $plugin_shortcodes, 'foos_gen_leader_board' );
+                $this->loader->add_shortcode( 'foos-leaderboard', $plugin_shortcodes, 'leaderboard' );
                 $this->loader->add_shortcode( 'foos-top-stat-board', $plugin_shortcodes, 'top_stat_board' );
-                $this->loader->add_shortcode( 'foos-searchforplayer', $plugin_shortcodes, 'foos_search_for_player' );
-                $this->loader->add_shortcode( 'foos-startmatchmodal', $plugin_shortcodes, 'foos_start_match_modal' );
                 $this->loader->add_shortcode( 'foos-match-board', $plugin_shortcodes, 'match_board' );
                 $this->loader->add_shortcode( 'foos-my-matches', $plugin_shortcodes, 'my_matches' );
                 $this->loader->add_shortcode( 'foos-player-info', $plugin_shortcodes, 'player_info' );
