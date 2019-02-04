@@ -167,8 +167,9 @@ class Wp_Foosnines_Public {
     
     function ajax_get_elo_history() {
         $player_id = intval($_REQUEST['player_id']);
-        $elo_master = new Elo_Master();
-        die(json_encode($elo_master->get_elo_history($player_id)));
+        $elo_cont = new Foos_Elo_Controller();
+        echo json_encode($elo_cont->get_elo_history($player_id));
+        wp_die();
     }
 
 }

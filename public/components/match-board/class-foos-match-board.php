@@ -10,9 +10,8 @@ class Foos_Match_Board {
     
     public function singles_list() {
         // get all singles matches
-        $match_master = new Match_Master();
-        $singles_ids = $match_master->get_all_final_singles();
-        $elo_master = new Elo_Master();
+        $match_cont = new Foos_Match_Controller();
+        $singles_ids = $match_cont->get_all_final_singles();
         ?>
 <div class="container-flex" style="margin-bottom:50px;">
     <div class="row justify-content-md-center">

@@ -151,9 +151,9 @@ class Foos_Player_Controller {
             update_user_meta($winner_id, 'foos_lws', $curr_ws);
         }
         
-        $elo_master = new Elo_Master();
+        $elo_cont = new Foos_Elo_Controller();
         // update elo rating (pre-condition: match is final)
-        $elo_master->update_elo_from_match($match_id);
+        $elo_cont->update_elo_from_match($match_id);
     }
     
     public function get_players_by($order) {

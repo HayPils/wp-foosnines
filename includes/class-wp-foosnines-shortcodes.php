@@ -79,14 +79,13 @@ class Wp_Foosnines_Shortcodes {
     }
     
     public function my_matches() {
-        $my_matches = new Foos_My_Matches();
-        $match_master = new Match_Master();
+        $match_cont = new Foos_Match_Controller();
         
         // attempt to create new match if player ids in request vars
         if (isset($_POST['p1id']) && isset($_POST['p2id'])) {
             $p1_id = intval($_POST['p1id']);
             $p2_id = intval($_POST['p2id']);
-            $match_master->create_singles_match($p1_id, $p2_id);
+            $match_cont->create_singles_match($p1_id, $p2_id);
         }
         
         // attempt to submit a match score
@@ -95,14 +94,15 @@ class Wp_Foosnines_Shortcodes {
             $submit_match_id = intval($_POST['match_id']);
             $p1_score = intval($_POST['p1_score']);
             $p2_score = intval($_POST['p2_score']);
-            $valid_submit = $match_master->submit_score($submit_match_id, $p1_score, $p2_score);
+            $valid_submit = $match_cont->submit_score($submit_match_id, $p1_score, $p2_score);
         }
+        $my_matches = new Foos_My_Matches(get_current_user_id(), $valid_submit, $submit_match_id);
+        $my_matches->enqueue_js();
         
         ob_start();
-        
+        $my_matches->list_menu();
         $my_matches->inp_singles_match_list();  // print in progress singles match list
         $my_matches->final_singles_match_list();    // print final singles match list
-        
         return ob_get_clean();
     }
     
