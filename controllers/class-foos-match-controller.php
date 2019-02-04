@@ -94,7 +94,6 @@ class Foos_Match_Controller {
 
         if (($prev_p1_score != $p1_score || $prev_p2_score != $p2_score)) { // change score
             if  (($p1_score == 5 && $p2_score == 5) || $p1_score < 0 || $p1_score > 5 || $p2_score < 0 || $p2_score > 5) {  // invalid score
-                var_dump('here');exit;
                 return false;
             }
             update_post_meta($match_id, 'p1_score', $p1_score);
