@@ -182,16 +182,18 @@ class Wp_Foosnines_Public {
         $all_players = $player_cont->get_players_by('');
         $names = [];
         foreach ($all_players as $player) {
-            array_push($names, [
-                    'id'        => $player->ID,
-                    'display'   => $player->display_name
-                ]);
-            $p_fullname = trim($player->first_name . ' ' . $player->last_name);
-            if ($p_fullname !== trim($player->display_name)) {
+            if ($player->ID !== get_current_user_id()) {
                 array_push($names, [
-                    'id'        => $player->ID,
-                    'display'   => $player->first_name . ' ' . $player->last_name
-                ]);
+                        'id'        => $player->ID,
+                        'display'   => $player->display_name
+                    ]);
+                $p_fullname = trim($player->first_name . ' ' . $player->last_name);
+                if ($p_fullname !== trim($player->display_name)) {
+                    array_push($names, [
+                        'id'        => $player->ID,
+                        'display'   => $player->first_name . ' ' . $player->last_name
+                    ]);
+                }
             }
         }
         echo json_encode($names);

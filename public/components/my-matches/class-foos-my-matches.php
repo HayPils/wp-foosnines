@@ -206,7 +206,7 @@ class Foos_My_Matches {
                                     </div>
                                     <div class="typeahead__button">
                                         <button type="submit">
-                                            <span class="typeahead__search-icon"></span>
+                                            <span>Select</span>
                                         </button>
                                     </div>
                                 </div>

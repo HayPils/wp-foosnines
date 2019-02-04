@@ -2,7 +2,8 @@
     'use strict';
 
     $('.foos-score-box-form input').change(function() {
-        var submit_btn = jQuery('.foos-score-box-form button');
+        var submit_btn = jQuery(this).parent().parent().children('button');
+        submit_btn.removeClass('btn-dark');
         submit_btn.removeClass('btn-success');
         submit_btn.addClass('btn-primary');
         submit_btn.text('Submit');
@@ -38,7 +39,7 @@
             }
         },
         hint: true,
-        generateOnLoad: false,
+        generateOnLoad: true,
         mustSelectItem: true,
         callback: {
             onSubmit:function(node,form,item,event) {

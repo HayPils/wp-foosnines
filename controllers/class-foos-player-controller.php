@@ -197,4 +197,14 @@ class Foos_Player_Controller {
         $losses = get_user_meta($user_id, 'foos_losses', true);
         return ($wins + $losses > 0) ? $user_elo : 0;
     }
+    
+    public function reset_player_stats($player_id) {
+        update_user_meta($player_id, 'foos_wins', 0);
+        update_user_meta($player_id, 'foos_losses', 0);
+        update_user_meta($player_id, 'foos_elo', 0);
+        update_user_meta($player_id, 'foos_ws', 0);
+        update_user_meta($player_id, 'foos_lws', 0);
+        update_user_meta($player_id, 'foos_g', 0);
+        update_user_meta($player_id, 'foos_ga', 0);
+    }
 }

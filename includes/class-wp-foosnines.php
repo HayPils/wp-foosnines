@@ -186,7 +186,7 @@ class Wp_Foosnines {
 
                 // Register creation of match custom post type
                 $this->loader->add_action( 'init', $plugin_public, 'create_match_post_type' );
-                $this->loader->add_action(  'shutdown', $plugin_public, 'deactivate_foos');
+                $this->loader->add_action( 'shutdown', $plugin_public, 'deactivate_foos');
 
                 $this->loader->add_action( 'user_register', $plugin_public, 'tml_user_register_names' );
                 
