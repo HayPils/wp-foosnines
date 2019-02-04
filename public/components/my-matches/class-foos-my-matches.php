@@ -38,9 +38,9 @@ class Foos_My_Matches {
 
     }
     
-    private function inp_singles_match_list() {
-        $player_cont = new Foos_Player_Controller();
+    public function inp_singles_match_list() {
         $elo_cont = new Foos_Elo_Controller();
+        $player_cont = new Foos_Player_Controller();
         $inp_singles = $player_cont->get_user_inp_singles($this->cid);
         ?>
 <!-- inp singles matches -->
@@ -115,11 +115,12 @@ class Foos_My_Matches {
             </div>
         </div>
     </div>
+            <?php endforeach; ?>
 </div>
-            <?php endforeach;
+        <?php
     }
     
-    private function final_singles_match_list() {
+    public function final_singles_match_list() {
         $player_cont = new Foos_Player_Controller();
         $final_singles = $player_cont->get_user_final_singles($this->cid);
         ?>
