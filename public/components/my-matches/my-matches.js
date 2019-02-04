@@ -1,7 +1,7 @@
 (function( $ ) {
     'use strict';
 
-    $('.foos-score-box-form input').change(function() {
+    $('.foos-score-box-form input').on('keyup', function() {
         var submit_btn = jQuery(this).parent().parent().children('button');
         submit_btn.removeClass('btn-dark');
         submit_btn.removeClass('btn-success');
@@ -42,12 +42,16 @@
         generateOnLoad: true,
         mustSelectItem: true,
         callback: {
-            onSubmit:function(node,form,item,event) {
+            onClickAfter: function(node, a, item, event) {
+                load_opponent(item.id);
+                $('#new_p2id').val(item.id);
+            },
+            onSubmit: function(node, form, item, event) { // prevent form submission on enter
                 event.preventDefault();
                 load_opponent(item.id);
                 $('#new_p2id').val(item.id);
             }
-        }   // prevent form submission on enter
+        }   
     });
     
     function load_opponent(player_id) {

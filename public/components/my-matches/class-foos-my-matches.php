@@ -202,12 +202,8 @@ class Foos_My_Matches {
                                                id="player_name"
                                                name="player_name"
                                                type="search"
+                                               placeholder="Select an opponent"
                                                autocomplete="off">
-                                    </div>
-                                    <div class="typeahead__button">
-                                        <button type="submit">
-                                            <span>Select</span>
-                                        </button>
                                     </div>
                                 </div>
                             </div>
