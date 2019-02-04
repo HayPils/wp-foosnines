@@ -23,7 +23,6 @@ class Foos_My_Matches {
     
     public function list_menu() {        
         ?>
-
 <div class="container-flex" style="margin-bottom:50px;">
     <div class="row justify-content-md-center">
         <div class="col-sm-5 foos-menu-selector" id="inp_btn" style="background-color:lightgray;">
@@ -89,11 +88,7 @@ class Foos_My_Matches {
                 <?php else: ?>
                     <button type="submit" class="btn btn-primary">Submit</button>
                 <?php endif; ?>
-                    
-                <?php if ($this->sub_match_id == $match_id && !$this->valid_submit) :    // error message ?>
-                    <p>You can't submit that score you crazy person!</p>
-                <?php endif;
-                if ($waiting) : ?>
+                <?php if ($waiting && ($p1_score == 5 xor $p2_score == 5)) : ?>
                     <p>Waiting for opponent to accept</p>
                 <?php endif; ?>
             </form>
@@ -158,6 +153,74 @@ class Foos_My_Matches {
         </div>
     </div>
             <?php endforeach; ?>
+</div>
+        <?php
+    }
+
+    public function new_match_row() {
+        ?>
+<div id="new_match_row" class="row justify-content-md-center foos-match-row">
+    <div class="col-sm-5">
+        <div class="row">
+            <div class="col-"><?php echo get_avatar($this->cid, 80) ?></div>
+            <div class="col">
+                <div class="row">
+                    <div class="col">
+                        <h3>
+                            <?php echo Foos_Info_Filter::foos_name(get_userdata($this->cid)) ?>
+                        </h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col"><?php echo get_user_meta($this->cid, 'foos_elo', true) ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-2 foos-score-box-form" style="text-align:center;">
+        <form method="post">
+            <input type="hidden" name="p1id" value="<?php echo $this->cid ?>">
+            <input type="hidden" id="new_p2id" name="p2id" value="0">
+            <h3>
+                <input type="text" name="p1_score" value="0" class="foos-score-box" autocomplete="off">
+                -
+                <input type="text" name="p2_score" value="0" class="foos-score-box" autocomplete="off">
+            </h3>
+            <button type="submit" class="btn btn-dark">Start</button>
+        </form>
+    </div>
+    <div class="col-sm-5" style="text-align:right;">
+        <div class="row">
+            <div class="col">
+                <div class="row">
+                    <div class="col">
+                        <form>
+                            <div class="typeahead__container">
+                                <div class="typeahead__field">
+                                    <div class="typeahead__query">
+                                        <input class="player-typeahead"
+                                               id="player_name"
+                                               name="player_name"
+                                               type="search"
+                                               autocomplete="off">
+                                    </div>
+                                    <div class="typeahead__button">
+                                        <button type="submit">
+                                            <span class="typeahead__search-icon"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="new_p2_rating" class="col"></div>
+                </div>
+            </div>
+            <div id="new_p2_avatar" class="col-"></div>
+        </div>
+    </div>
 </div>
         <?php
     }

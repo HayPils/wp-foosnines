@@ -75,6 +75,7 @@ class Wp_Foosnines_Public {
 
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/wp-foosnines-public.css', array(), $this->version, 'all' );
                 wp_enqueue_style( 'bootstrap_css', 'https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css', array(), $this->version, 'all');
+                wp_enqueue_style( 'jquery-typeahead', plugin_dir_url( __FILE__ ) . 'css/lib/jquery.typeahead.min.css', array(), '2.10.6', 'all' );
                 
 	}
 
@@ -97,6 +98,8 @@ class Wp_Foosnines_Public {
 		 * class.
 		 */
 
+                // https://www.npmjs.com/package/jquery-typeahead
+                wp_enqueue_script( 'jquery-typeahead', plugin_dir_url( __FILE__ ) . 'js/lib/jquery.typeahead.min.js', array( 'jquery' ), '2.10.6', false );
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/wp-foosnines-public.js', array( 'jquery', 'google-charts' ), $this->version, true );
                 wp_enqueue_script( 'bootstrap_js', "https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js", array('jquery'), $this->version, true);
                 wp_enqueue_script( 'google-charts', "https://www.gstatic.com/charts/loader.js", array(), '', true);
@@ -165,10 +168,43 @@ class Wp_Foosnines_Public {
         return $redirect_to;
     }
     
+    // ------------------------- AJAX CALLBACKS ---------------------------
+    
     function ajax_get_elo_history() {
         $player_id = intval($_REQUEST['player_id']);
         $elo_cont = new Foos_Elo_Controller();
         echo json_encode($elo_cont->get_elo_history($player_id));
+        wp_die();
+    }
+    
+    function ajax_get_player_names() {
+        $player_cont = new Foos_Player_Controller();
+        $all_players = $player_cont->get_players_by('');
+        $names = [];
+        foreach ($all_players as $player) {
+            array_push($names, [
+                    'id'        => $player->ID,
+                    'display'   => $player->display_name
+                ]);
+            $p_fullname = trim($player->first_name . ' ' . $player->last_name);
+            if ($p_fullname !== trim($player->display_name)) {
+                array_push($names, [
+                    'id'        => $player->ID,
+                    'display'   => $player->first_name . ' ' . $player->last_name
+                ]);
+            }
+        }
+        echo json_encode($names);
+        wp_die();
+    }
+    
+    function ajax_get_player_info() {
+        $player_id = intval($_REQUEST['player_id']);
+        $info = [
+            'rating'    => get_user_meta($player_id, 'foos_elo', true),
+            'avatar'    => get_avatar($player_id, 80)
+        ];
+        echo json_encode($info);
         wp_die();
     }
 
