@@ -16,55 +16,8 @@ class Foos_Match_Controller {
         if (!$this->user_id_exists($p1_id) || !$this->user_id_exists($p2_id)
             || ($curr_user_id != $p1_id && $curr_user_id != $p2_id)
             || ($curr_user_id == $p1_id && $curr_user_id == $p2_id)) {
-            return;
+            return -1;
         }
-        // check if match already exists
-        $args = array(
-            'post_type' => 'singles_match',
-            'meta_query' => array(
-                'relation' => 'OR',
-                array(
-                    'relation' => 'AND',
-                    array(
-                        'key' => 'p1_id',
-                        'value' => $p1_id,
-                        'compare' => '=',
-                    ),
-                    array(
-                        'key' => 'p2_id',
-                        'value' => $p2_id,
-                        'compare' => '='
-                    ),
-                    array(
-                        'key' => 'is_final',
-                        'value' => 0,
-                        'compare' => '='
-                    )
-                ),
-                array(
-                    'relation' => 'AND',
-                    array(
-                        'key' => 'p1_id',
-                        'value' => $p2_id,
-                        'compare' => '=',
-                    ),
-                    array(
-                        'key' => 'p2_id',
-                        'value' => $p1_id,
-                        'compare' => '='
-                    ),
-                    array(
-                        'key' => 'is_final',
-                        'value' => 0,
-                        'compare' => '='
-                    )
-                )
-            )
-        );
-        $wp_query = new WP_Query($args);
-        $existing_match_ids = $wp_query->get_posts();
-
-        if (count($existing_match_ids) > 0) return;  // do not create new match if one already exists
 
         $p1_user = get_userdata($p1_id);
         $p2_user = get_userdata($p2_id);
@@ -72,7 +25,7 @@ class Foos_Match_Controller {
         $p2_name = $p2_user->first_name . ' ' . $p2_user->last_name;
         
         // create match post
-        wp_insert_post(array(
+        return wp_insert_post(array(
             'post_type' => 'singles_match',
             'post_title' => $p1_name . ' vs. ' . $p2_name,
             'post_status' => 'publish',
@@ -115,7 +68,7 @@ class Foos_Match_Controller {
         if($count == 1){ return TRUE; }else{ return FALSE; }
     }
     
-    private function submit_score($match_id, $p1_score, $p2_score) {
+    public function submit_score($match_id, $p1_score, $p2_score) {
         if (get_post_meta($match_id, 'is_final', true)) return;    // cannot submit score of final match
         $curr_user_id = get_current_user_id();
         $p1_id = get_post_meta($match_id, 'p1_id', true);
@@ -141,6 +94,7 @@ class Foos_Match_Controller {
 
         if (($prev_p1_score != $p1_score || $prev_p2_score != $p2_score)) { // change score
             if  (($p1_score == 5 && $p2_score == 5) || $p1_score < 0 || $p1_score > 5 || $p2_score < 0 || $p2_score > 5) {  // invalid score
+                var_dump('here');exit;
                 return false;
             }
             update_post_meta($match_id, 'p1_score', $p1_score);
@@ -159,7 +113,8 @@ class Foos_Match_Controller {
         if ($p1_accept && $p2_accept && ($p1_score == 5 xor $p2_score == 5)) {  // finalize match
             update_post_meta($match_id, 'is_final', true);
             update_post_meta($match_id, 'final_date', current_time('timestamp'));
-            $this->update_player_data($p1_id, $p2_id, $p1_score, $p2_score, $match_id);
+            $player_cont = new Foos_Player_Controller();
+            $player_cont->update_player_data($p1_id, $p2_id, $p1_score, $p2_score, $match_id);
             return true;
         }
     }

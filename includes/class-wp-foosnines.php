@@ -194,6 +194,8 @@ class Wp_Foosnines {
                 
                 // ajax
                 $this->loader->add_action( 'wp_ajax_get_elo_history', $plugin_public, 'ajax_get_elo_history' );
+                $this->loader->add_action( 'wp_ajax_get_player_names', $plugin_public, 'ajax_get_player_names' );
+                $this->loader->add_action( 'wp_ajax_get_player_info', $plugin_public, 'ajax_get_player_info' );
 
 	}
         
