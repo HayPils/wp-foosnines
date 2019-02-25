@@ -168,6 +168,30 @@ class Wp_Foosnines_Public {
         return $redirect_to;
     }
     
+    function submit_match_data() {
+        $match_cont = new Foos_Match_Controller();
+        $submit_match_id = isset($_POST['match_id']) ? intval($_POST['match_id']) : -1;
+        $post_redirect = false;
+        
+        // attempt to create new match if player ids in request vars
+        if (isset($_POST['p1id']) && isset($_POST['p2id'])) {
+            $p1_id = intval($_POST['p1id']);
+            $p2_id = intval($_POST['p2id']);
+            $submit_match_id = $match_cont->create_singles_match($p1_id, $p2_id);
+            $post_redirect = true;
+        }
+        // attempt to submit a match score
+        $valid_submit = true;
+        if (isset($_POST['p1_score']) && isset($_POST['p2_score'])) {
+            $p1_score = intval($_POST['p1_score']);
+            $p2_score = intval($_POST['p2_score']);
+            $valid_submit = $match_cont->submit_score($submit_match_id, $p1_score, $p2_score);
+            $post_redirect = true;
+        }
+        
+        if ($post_redirect) wp_redirect(home_url('/my-matches'));  // clear post body
+    }
+    
     // ------------------------- AJAX CALLBACKS ---------------------------
     
     function ajax_get_elo_history() {

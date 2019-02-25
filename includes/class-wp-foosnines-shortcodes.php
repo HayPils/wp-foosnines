@@ -79,23 +79,7 @@ class Wp_Foosnines_Shortcodes {
     }
     
     public function my_matches() {
-        $match_cont = new Foos_Match_Controller();
-        $submit_match_id = isset($_POST['match_id']) ? intval($_POST['match_id']) : -1;
-        
-        // attempt to create new match if player ids in request vars
-        if (isset($_POST['p1id']) && isset($_POST['p2id'])) {
-            $p1_id = intval($_POST['p1id']);
-            $p2_id = intval($_POST['p2id']);
-            $submit_match_id = $match_cont->create_singles_match($p1_id, $p2_id);
-        }
-        // attempt to submit a match score
-        $valid_submit = true;
-        if (isset($_POST['p1_score']) && isset($_POST['p2_score'])) {
-            $p1_score = intval($_POST['p1_score']);
-            $p2_score = intval($_POST['p2_score']);
-            $valid_submit = $match_cont->submit_score($submit_match_id, $p1_score, $p2_score);
-        }
-        $my_matches = new Foos_My_Matches(get_current_user_id(), $valid_submit, $submit_match_id);
+        $my_matches = new Foos_My_Matches(get_current_user_id());
         $my_matches->enqueue_js();
         
         ob_start();

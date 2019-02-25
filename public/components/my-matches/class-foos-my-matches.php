@@ -7,13 +7,9 @@
  */
 class Foos_My_Matches {
     private $cid = 0;   // current player id
-    private $valid_submit = true;
-    private $sub_match_id = 0;
     
-    public function __construct($cid, $valid_submit, $sub_match_id) {
+    public function __construct($cid) {
         $this->cid = $cid;
-        $this->valid_submit = $valid_submit;
-        $this->sub_match_id = $sub_match_id;
     }
     
     public function enqueue_js() {
@@ -80,9 +76,9 @@ class Foos_My_Matches {
         <div class="col-sm-2 foos-score-box-form" style="text-align:center;">
             <form method="post">
                 <input type="hidden" name="match_id" value="<?php echo $match_id ?>">
-                <h3><input type="text" name="p1_score" value="<?php echo $p1_score ?>" class="foos-score-box" autocomplete="off">
+                <h3><input type="text" name="p1_score" value="<?php echo $p1_score ?>" class="foos-score-box" maxlength="1" autocomplete="off">
                     -
-                    <input type="text" name="p2_score" value="<?php echo $p2_score ?>" class="foos-score-box" autocomplete="off"></h3>
+                    <input type="text" name="p2_score" value="<?php echo $p2_score ?>" class="foos-score-box" maxlength="1" autocomplete="off"></h3>
                 <?php if (!$waiting && ($p1_score == 5 xor $p2_score == 5)): ?>
                     <button type="submit" class="btn btn-success">Accept</button>
                 <?php else: ?>
@@ -182,9 +178,9 @@ class Foos_My_Matches {
             <input type="hidden" name="p1id" value="<?php echo $this->cid ?>">
             <input type="hidden" id="new_p2id" name="p2id" value="0">
             <h3>
-                <input type="text" name="p1_score" value="0" class="foos-score-box" autocomplete="off">
+                <input type="text" name="p1_score" value="0" class="foos-score-box" maxlength="1" autocomplete="off">
                 -
-                <input type="text" name="p2_score" value="0" class="foos-score-box" autocomplete="off">
+                <input type="text" name="p2_score" value="0" class="foos-score-box" maxlength="1" autocomplete="off">
             </h3>
             <button type="submit" class="btn btn-dark">Start</button>
         </form>
